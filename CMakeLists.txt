@@ -10,7 +10,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(EVENT_LIB_SOURCES
     src/core/event.cpp
     src/core/event_packet.cpp
-    src/core/event_stream.cpp
 )
 
 # Create the library
@@ -22,8 +21,22 @@ target_include_directories(event_lib PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
-# Optional: Enable testing
+# Test
 enable_testing()
+    # test_event
+add_executable(test_event tests/test_event.cpp)
+target_link_libraries(test_event PRIVATE event_lib)
+
+    #test_build_include_run
+add_executable(test_build_include_run tests/test_build_include_run.cpp)
+target_link_libraries(test_build_include_run PRIVATE event_lib)
+
+
+target_include_directories(test_event PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+add_test(NAME EventTests COMMAND test_event)
+add_test(NAME BuildIncludeRunTests COMMAND test_build_include_run)
+
 
 # Optional: Add examples (if needed)
 # add_subdirectory(examples)

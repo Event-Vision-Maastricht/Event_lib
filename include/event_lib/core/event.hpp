@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <iostream>
+#include <vector>
 
 namespace event_lib {
 
@@ -64,6 +65,9 @@ namespace event_lib {
      */
     bool is_valid_event(const Event& event, int width, int height);
 
-}  // namespace event_lib
+    long long get_timestamp(Event e);
+    std::vector<int> get_coordinates(Event e);
+    bool get_polarity(Event e);
+}
 
-#endif  // EVENT_LIB_CORE_EVENT_HPP
+#endif
