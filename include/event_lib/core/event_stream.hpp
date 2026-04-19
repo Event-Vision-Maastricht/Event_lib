@@ -6,8 +6,8 @@
 
 namespace event_lib {
     /**
-     * Interface for sequentially reading events from different sources 
-     * (camera, dataset files, network, etc.). 
+     * Interface for sequentially reading events from different sources
+     * (camera, dataset files, network, etc.).
      * Implementations inherit from this class, override is possible to provide specific reading logic
      * depending on if the data is getting fetched from camera or read from a dataset.
      *

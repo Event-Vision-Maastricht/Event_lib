@@ -10,6 +10,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(EVENT_LIB_SOURCES
     src/core/event.cpp
     src/core/event_packet.cpp
+    # src/io/camera/CameraEventStream.cpp
+    src/io/dataset/DatasetEventStream.cpp
 )
 
 # Create the library
