@@ -4,7 +4,7 @@
 #include <vector>
 #include "event.hpp"
 
-namespace event_lib {
+namespace event_lib {//TODO: some method or operator to check the differences between two packets
     /**
      * @class EventPacket
      * @brief Container for managing a collection of events

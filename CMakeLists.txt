@@ -26,16 +26,21 @@ enable_testing()
     # test_event
 add_executable(test_event tests/test_event.cpp)
 target_link_libraries(test_event PRIVATE event_lib)
+target_include_directories(test_event PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
     #test_build_include_run
 add_executable(test_build_include_run tests/test_build_include_run.cpp)
 target_link_libraries(test_build_include_run PRIVATE event_lib)
 
+    # test_event_packet
+add_executable(test_event_packet tests/test_event_packet.cpp)
+target_link_libraries(test_event_packet PRIVATE event_lib)
+target_include_directories(test_event_packet PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-target_include_directories(test_event PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_test(NAME EventTests COMMAND test_event)
 add_test(NAME BuildIncludeRunTests COMMAND test_build_include_run)
+add_test(NAME EventPacketTests COMMAND test_event_packet)
 
 
 # Optional: Add examples (if needed)

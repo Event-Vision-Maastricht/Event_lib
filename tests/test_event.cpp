@@ -15,33 +15,30 @@ bool run_test(const std::string& name, bool result) {
 }
 
 bool test_create_event() {
-    Event e = create_event(1.6767, 10,10,1);
-    Event e1 = create_event(1.6767,10,10,1);
-    if(e == Event() || e != e1){
-        std::cout << "CREATE EVENT FAILED";
-        return 0;
-    }
+    Event e = create_event(16767, 10,10,1);
+    Event e1 = create_event(16767,10,10,1);
+    if(e == Event() || e != e1) return 0;
     return true;
 }
 
 bool test_valid_event() {
-    Event e = create_event(1.6767, 10,10,1);
+    Event e = create_event(16767, 10,10,1);
     return is_valid_event(e,11,11) == 1 && is_valid_event(e,9,9) ==0;
 }
 
 bool test_get_ts() {
-    Event e = create_event(1.6767, 10,10,1);
-    return get_timestamp(e) == (long long) 1.6767;
+    Event e = create_event(16767, 10,10,1);
+    return get_timestamp(e) == 16767;
 }
 
 bool test_get_coordinates() {
-    Event e = create_event(1.6767, 10, 10, 1);
+    Event e = create_event(16767, 10, 10, 1);
     auto coords = get_coordinates(e);
     return coords[0] == 10 && coords[1] == 10;
 }
 
 bool test_get_polarity() {
-    Event e = create_event(1.6767, 10,10,1);
+    Event e = create_event(16767, 10,10,1);
     return (double) get_polarity(e) == 1;
 }
 
