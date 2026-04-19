@@ -65,9 +65,26 @@ namespace event_lib {
      */
     bool is_valid_event(const Event& event, int width, int height);
 
-    long long get_timestamp(Event e);
-    std::vector<int> get_coordinates(Event e);
-    bool get_polarity(Event e);
+    /**
+     * @brief Get timestamp from event
+     * @param e The event
+     * @return Timestamp value
+     */
+    long long get_timestamp(const Event& e);
+
+    /**
+     * @brief Get X and Y coordinates from event
+     * @param e The event
+     * @return Vector containing [x, y]
+     */
+    std::vector<int> get_coordinates(const Event& e);
+
+    /**
+     * @brief Get polarity from event
+     * @param e The event
+     * @return Polarity value
+     */
+    bool get_polarity(const Event& e);
 }
 
 #endif

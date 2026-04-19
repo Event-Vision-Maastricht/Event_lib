@@ -24,15 +24,33 @@ bool test_create_event() {
     return true;
 }
 
-uint32_t factorial( uint32_t number ) {
-    return number <= 1 ? number : factorial(number-1) * number;
+bool test_valid_event() {
+    Event e = create_event(1.6767, 10,10,1);
+    return is_valid_event(e,11,11) == 1 && is_valid_event(e,9,9) ==0;
+}
+
+bool test_get_ts() {
+    Event e = create_event(1.6767, 10,10,1);
+    return get_timestamp(e) == (long long) 1.6767;
+}
+
+bool test_get_coordinates() {
+    Event e = create_event(1.6767, 10, 10, 1);
+    auto coords = get_coordinates(e);
+    return coords[0] == 10 && coords[1] == 10;
+}
+
+bool test_get_polarity() {
+    Event e = create_event(1.6767, 10,10,1);
+    return (double) get_polarity(e) == 1;
 }
 
 
 int main() {
     run_test("test_create_event", test_create_event() == 1);
-    run_test("random",factorial(3) == 6);
-    
-    std::cout << "########## All tests passed in test_event! ##########" << std::endl;
+    run_test("test_valid_event", test_valid_event() == 1);
+    run_test("test_get_ts", test_get_ts()==1);
+    run_test("test_get_coordinates", test_get_coordinates()==1);
+    run_test("test_get_polarity", test_get_polarity()==1);
     return 0;
 }

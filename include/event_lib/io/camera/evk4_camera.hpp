@@ -1,4 +1,3 @@
-// camera/dvs_camera.hpp
 #pragma once
 
 #include "../../core/event_stream.hpp"

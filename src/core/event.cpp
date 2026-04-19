@@ -2,7 +2,7 @@
 #include <vector>
 
 namespace event_lib {
-
+//ts in ms
     Event create_event(long long ts, int x, int y, bool polarity) {
         return Event(ts, x, y, polarity);
     }
@@ -22,16 +22,15 @@ namespace event_lib {
                event.timestamp >= 0;
     }
 
-    long long get_timestamp(Event e){
+    long long get_timestamp(const Event& e) {
         return e.timestamp;
     }
 
-    std::vector<int> get_coordinates(Event e){
-        std::vector<int> coords = {e.x, e.y};
-        return coords;
+    std::vector<int> get_coordinates(const Event& e) {
+        return {e.x, e.y};
     }
 
-    bool get_polarity(Event e){
+    bool get_polarity(const Event& e) {
         return e.polarity;
     }
 
