@@ -11,8 +11,10 @@ set(EVENT_LIB_SOURCES
     src/core/event.cpp
     src/core/event_packet.cpp
     # src/io/camera/CameraEventStream.cpp
-    src/io/dataset/DatasetEventStream.cpp
-)
+    src/io/dataset/DatasetEventStream.cpp    src/io/dataset/FileParser.cpp
+    src/io/dataset/DatEventParser.cpp
+    src/io/dataset/RawEventParser.cpp
+    src/io/dataset/HdfEventParser.cpp)
 
 # Create the library
 add_library(event_lib ${EVENT_LIB_SOURCES})
