@@ -6,9 +6,9 @@
 
 namespace event_lib {
 
-class DatEventStream : public EventStream {
+class DatStream : public EventStream {
 public:
-    explicit DatEventStream(const std::string& path);
+    explicit DatStream(const std::string& path);
 
     bool has_next() const override;
     Event next() override;

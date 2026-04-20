@@ -11,8 +11,8 @@ set(EVENT_LIB_SOURCES
     src/core/event.cpp
     src/core/event_packet.cpp
     src/io/parser/FileParser.cpp
-    src/io/parser/DatEventParser.cpp
-    src/io/stream/DatEventStream.cpp
+    src/io/parser/DatParser.cpp
+    src/io/stream/DatStream.cpp
 )
 
 # Create the library
@@ -24,7 +24,7 @@ target_include_directories(event_lib PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
-# Test
+################################### Test
 enable_testing()
     # test_event
 add_executable(test_event tests/test_event.cpp)
