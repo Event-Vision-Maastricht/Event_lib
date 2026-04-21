@@ -10,9 +10,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(EVENT_LIB_SOURCES
     src/core/event.cpp
     src/core/event_packet.cpp
-    src/io/parser/FileParser.cpp
+    src/io/parser/EventParserFactory.cpp
     src/io/parser/DatParser.cpp
-    src/io/stream/DatStream.cpp
+    src/io/stream/DatasetEventStream.cpp
 )
 
 # Create the library

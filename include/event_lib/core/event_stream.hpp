@@ -2,12 +2,13 @@
 #define EVENT_LIB_CORE_EVENT_STREAM_HPP
 
 #include "event.hpp"
+#include "event_packet.hpp"
 #include <cstdint>
 
 namespace event_lib {
     /**
-     * Interface for sequentially reading events from different sources
-     * (camera, dataset files, network, etc.).
+     * @brief Interface for sequentially reading events from camera or dataset.
+     *
      * Implementations inherit from this class, override is possible to provide specific reading logic
      * depending on if the data is getting fetched from camera or read from a dataset.
      *
@@ -34,11 +35,12 @@ namespace event_lib {
         // Reset the stream to the beginning
         virtual bool reset() {return false;} //default false bcs not reset
 
+        virtual EventPacket next_packet(std::size_t max_events = 1024) = 0;
+
         // Close and cleanup the stream
         //TODO: could use to release the file and stuff, default nothing
         virtual void close() {}
 
-        
         //TODO: Get the total number of events in this stream (check if its known in evk4)
         virtual long long get_event_count() const {
             return -1;  // Default: unknown, derived classes can override

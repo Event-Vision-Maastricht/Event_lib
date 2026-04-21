@@ -1,8 +1,6 @@
-#include "event_lib/core/event.hpp"
-#include "event_lib/io/dataset/DatasetEventStream.hpp"
-#include "event_lib/io/dataset/FileParser.hpp"
-#include <vector>
-#include <fstream>
+#include "event_lib/core/event_packet.hpp"
+#include "event_lib/io/stream/DatasetEventStream.hpp"
+#include "event_lib/io/parser/EventParserFactory.hpp"
 #include <stdexcept>
 ///////////////////// Ideas for future, supporting bigger files easily //////////////////////
 // - Lazy Loading: Instead of preloading, read events on-demand in next().
@@ -12,42 +10,48 @@
 // it's simpler, but document the limitation.
 // - Future Optimization: If needed, implement a LazyDatasetEventStream subclass or add a load_mode parameter.
 
-
-
-//ABSTRACT ANY OF THE FILES TO ONE TYPE, SO WHAT DO THEY ALL HAVE IN COMMON??
-//---- header info (date, wtv idk)
-//---- events
-//---- do lazy loading, maybe read only a specific amount of events at a time???
 namespace event_lib {
-    DatasetEventStream::DatasetEventStream(const std::string& path) : path_(path), current_index_(0) {
-        try {
-            load_dataset();
-        } catch (const std::exception& e) {
-            throw std::runtime_error("Failed to load file: " + std::string(e.what()));
-        }
+    DatasetEventStream::DatasetEventStream(const std::string& path) {
+        parser_ = EventParserFactory::create_parser(path);
+        parser_->open(path);
+    }
+
+    DatasetEventStream::~DatasetEventStream(){
+        close();
     }
 
     bool DatasetEventStream::has_next() const {
-        return current_index_ < events_.size();
+        return parser_ && parser_->has_more();
     }
 
     Event DatasetEventStream::next() {
-        if (!has_next()) {
-            throw std::out_of_range("No more events in stream.");
+        EventPacket packet = next_packet(1);
+        if (packet.is_empty()) {
+            throw std::out_of_range("No more events in DAT stream.");
         }
-        return events_[current_index_++];
+
+        return packet.get_events().front();
     }
 
     bool DatasetEventStream::reset() {
-        current_index_ = 0;
-        return true;
+        if(!parser_) {
+            return false;
+        }
+        return parser_->reset();
     }
 
-    long long DatasetEventStream::get_event_count() const {
-        return static_cast<long long>(events_.size());
+    void DatasetEventStream::close(){
+        if(parser_){
+            parser_->close();
+        }
     }
 
-    void DatasetEventStream::load_dataset() {
-        events_ = FileParser::load_events(path_);
+    EventPacket DatasetEventStream::next_packet(std::size_t max_events){
+        if(!parser_){
+            throw std::runtime_error("Parser not initialized.");
+        }if(!has_next()){
+            throw std::out_of_range("No more event packages in stream.");
+        }
+        return parser_->read_packet(max_events);
     }
 }

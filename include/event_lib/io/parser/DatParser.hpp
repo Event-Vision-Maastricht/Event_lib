@@ -1,8 +1,13 @@
 #pragma once
 
+#include <cstddef>
 #include <string>
 #include <vector>
-#include "../../core/event.hpp"
+#include <fstream>
+#include "event_lib/core/event.hpp"
+#include "event_lib/core/event_packet.hpp"
+#include "event_lib/core/event_parser.hpp"
+//////////////     decode data
 
 namespace event_lib {
 
@@ -15,13 +20,28 @@ struct DatFileHeader {
     std::string event_type;
 };
 
-class DatParser {
+class DatParser final : public EventParser{
 public:
-    static std::vector<Event> parse(const std::string& path);
-    static DatFileHeader read_header(const std::string& path);
+    DatParser() = default;
+    ~DatParser() override;
+
+    void open(const std::string& path) override;
+    bool has_more() const override;
+    EventPacket read_packet(std::size_t max_events) override;
+    bool reset() override;
+    void close() override;
+
+    DatFileHeader header() const;
 
 private:
     static void validate_dat_path(const std::string& path);
+    DatFileHeader read_header();
+    Event decode_event(const unsigned char* bytes) const;
+
+    std::string path_;
+    std::ifstream file_;
+    DatFileHeader header_;
+    bool eof_reached_ = true;
 };
 
 }

@@ -1,42 +1,29 @@
 #pragma once
-#include <string>
-#include <vector>
-#include "../../core/event_stream.hpp"
 
+#include <cstddef>
+#include <memory>
+#include <string>
+#include "../../core/event_stream.hpp"
+#include "event_lib/core/event_parser.hpp"
+//////////////////////    owns the parser, take events send to user as event packet
 
 namespace event_lib {
 
 class DatasetEventStream : public EventStream {
 public:
     explicit DatasetEventStream(const std::string& path);
+    ~DatasetEventStream() override;
 
-    /**
-     * @brief checks if there exists a next event to read
-     */
     bool has_next() const override;
-
-    /**
-     * @brief reads the next event
-     */
     Event next() override;
-
-    /**
-     * @brief 
-     * @return 
-     */
     bool reset() override;
+    void close() override;
+    //    long long get_event_count() const override; //////expensive
 
-    /**
-     * @brief 
-     * @return 
-     */
-    long long get_event_count() const override;
+    EventPacket next_packet(std::size_t max_events = 1024) override;
 
 private:
-    std::string path_;
-    std:: vector<Event> events_;
-    std::size_t current_index_ = 0;
+    std::unique_ptr<EventParser> parser_;
 
-    void load_dataset();
 };
 }

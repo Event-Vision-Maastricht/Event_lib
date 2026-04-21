@@ -4,13 +4,13 @@ Tools for simplifying your event-based life
 Overleaf link: https://www.overleaf.com/read/hhtprzkmqqfg#3263d1
 
 ##TODO:
-- DatasetEventStream
-    - Design to read multiple files
+- DatasetEventStream (delete all instances)
+
 
 #### initial supported files
-- raw  (in progress)
+- raw  (TODO)
 - dat  (in progress)
-- hdf5 (in progress)
+- hdf5 (TODO)
 
 
 #### build and testing for windows
