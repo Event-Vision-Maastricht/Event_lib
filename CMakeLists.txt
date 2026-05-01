@@ -40,10 +40,17 @@ add_executable(test_event_packet tests/test_event_packet.cpp)
 target_link_libraries(test_event_packet PRIVATE event_lib)
 target_include_directories(test_event_packet PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+    # test_datH
+add_executable(test_datH tests/test_datH.cpp)
+target_link_libraries(test_datH PRIVATE event_lib)
+target_include_directories(test_datH PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
 
 add_test(NAME EventTests COMMAND test_event)
 add_test(NAME BuildIncludeRunTests COMMAND test_build_include_run)
 add_test(NAME EventPacketTests COMMAND test_event_packet)
+add_test(NAME DatHTests COMMAND test_datH)
+
 
 
 # Optional: Add examples (if needed)

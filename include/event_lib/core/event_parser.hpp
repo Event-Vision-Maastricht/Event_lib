@@ -18,6 +18,6 @@ namespace event_lib {
         virtual bool reset() =0;
         virtual void close() =0;
 
-        virtual FileHeader header() const;
-    }
+        //virtual FileHeader header() const;
+    };
 }

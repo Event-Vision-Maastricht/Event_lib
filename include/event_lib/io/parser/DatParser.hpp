@@ -12,14 +12,16 @@
 namespace event_lib {
 
 struct DatFileHeader {
-    int width = 0;
-    int height = 0;
-    std::string date;
-    std::string time;
-    std::string version;
-    std::string event_type;
-};
 
+
+    int width = 0; // Horizontal size of image sensor array.
+    int height = 0;// Vertical size of image sensor array.
+    std::string date;/////     Recording Date, format: YYYY-MM-DD HH:MM:SS
+    std::string time;
+    std::string version;// Format version
+    std::string event_type; //Type of event: CD/2d/ExtTrig
+};
+//The event size is 8 for all those types.
 class DatParser final : public EventParser{
 public:
     DatParser() = default;
@@ -30,6 +32,7 @@ public:
     EventPacket read_packet(std::size_t max_events) override;
     bool reset() override;
     void close() override;
+    int get_length();
 
     DatFileHeader header() const;
 
@@ -38,6 +41,7 @@ private:
     DatFileHeader read_header();
     Event decode_event(const unsigned char* bytes) const;
 
+    int length_ =0;
     std::string path_;
     std::ifstream file_;
     DatFileHeader header_;
