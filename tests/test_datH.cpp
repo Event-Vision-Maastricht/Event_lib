@@ -50,28 +50,33 @@ bool test_header_reading(){
     return true;
 }
 
-bool test_read_event(){
+bool test_read_event(int amount){
     try{
-        packet = parser.read_packet(1);
+        packet = parser.read_packet(amount);
     }catch(const std::exception& e){
         std::cerr << "Something went wrong while reading: " << e.what() << std::endl;
         return false;
     }
-    if(packet.size() !=1) return false;
-    std::vector<Event> e = packet.get_events();
-    Event ev = e[0];
+    if(packet.size() !=amount) return false;
 
-    std::cout << "First Event:\n"
-        << "  Timestamp: " << ev.timestamp << "\n"
-        << "  Polarity: " << ev.polarity << " \n"
-        << "  X axis: " << ev.x << "\n"
-        << "  Y axis: " << ev.y << std::endl;
+    std::vector<Event> e = packet.get_events();
+
+    for(int i =0; i<amount; i++){
+        Event ev = e[i];
+        // std::cout << "Event Number:"<< i+1<<"\n"
+        //     << "  Timestamp: " << ev.timestamp << "\n"
+        //     << "  Polarity: " << ev.polarity << " \n"
+        //     << "  X axis: " << ev.x << "\n"
+        //     << "  Y axis: " << ev.y << std::endl;
+
+        std::cout <<"  Timestamp: " << ev.timestamp << "  Polarity: " << ev.polarity << "  X axis: " << ev.x << "  Y axis: " << ev.y << std::endl;
+    }
     return true;
 }
 
 int main() {
     run_test("header testing", test_header_reading());
-    run_test("read one event", test_read_event());
+    run_test("read events", test_read_event(100));
 
     return 0;
 }

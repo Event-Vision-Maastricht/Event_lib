@@ -12,8 +12,6 @@
 namespace event_lib {
 
 struct DatFileHeader {
-
-
     int width = 0; // Horizontal size of image sensor array.
     int height = 0;// Vertical size of image sensor array.
     std::string date;/////     Recording Date, format: YYYY-MM-DD HH:MM:SS

@@ -100,6 +100,9 @@ void DatParser::open(const std::string& path) {
 
     header_ = read_header();
 
+    // skip binary event metadata block: type(1) + size(1) + reserved(4)
+    file_.seekg(6, std::ios::cur);
+
     eof_reached_ = false;
 }
 
@@ -222,7 +225,6 @@ DatFileHeader DatParser::read_header() {
             continue;
         }
     }
-
     return header;
 }
 
@@ -238,25 +240,25 @@ DatFileHeader DatParser::read_header() {
  */
 Event DatParser::decode_event(const unsigned char* bytes) const {
     Event event;
-    // First 4 bytes: 32-bit signed timestamp (file stores int32)
-    std::int32_t ts32 = 0;
-    std::uint32_t next32 = 0;
-    std::memcpy(&ts32, bytes, sizeof(ts32));
-    // Next 4 bytes: packed (polarity:4 | y:14 | x:14)
-    std::memcpy(&next32, bytes + sizeof(ts32), sizeof(next32));
+    // 4 bytes: packed (polarity:4 | y:14 | x:14)
+    std::uint32_t packed = 0;
+    // Other 4 bytes: 32-bit signed timestamp (file stores int32)
+    std::uint32_t ts32 = 0;
 
-    try{
-        // Assign timestamp into event (widen to long long)
-        event.timestamp = static_cast<long long>(ts32);
-    }catch(...){
-        throw std::runtime_error("Failed to open .dat file: " + path_);
+    std::memcpy(&packed, bytes, 4);
+    std::memcpy(&ts32, bytes + 4, 4);
 
-    }
+    // Assign timestamp into event (widen to long long)
+    event.timestamp = static_cast<long long>(ts32);
     
     // Unpack bits (assume polarity in the top 4 bits)
-    const std::uint32_t polarity_bits = (next32 >> 28) & 0xFu; // 4 bits
-    const std::uint32_t y_bits = (next32 >> 14) & 0x3FFFu; // next 14 bits
-    const std::uint32_t x_bits = next32 & 0x3FFFu; // lowest 14 bits
+    const std::uint32_t polarity_bits = (packed >> 28) & 0xFu; // 4 bits
+    const std::uint32_t y_bits = (packed >> 14) & 0x3FFFu; // next 14 bits
+    const std::uint32_t x_bits = packed & 0x3FFFu; // lowest 14 bits
+
+    if(y_bits>header_.height || x_bits>header_.width){
+        throw std::runtime_error("Coordinates cannot be bigger than limits");
+    }
 
     event.polarity = polarity_bits != 0;
     event.y = static_cast<int>(y_bits);
