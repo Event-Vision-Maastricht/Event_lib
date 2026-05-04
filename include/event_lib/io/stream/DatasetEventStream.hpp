@@ -19,7 +19,15 @@ public:
     bool reset() override;
     void close() override;
 
-    EventPacket next_packet(std::size_t max_events = 1024) override;
+    EventPacket next_packet(std::size_t max_events = 10000) override;
+
+    //header operations
+    int get_width();
+    int get_height();
+    std::string get_date();
+    std::string get_init_recording_time();
+    std::string get_version();
+    std::string get_event_type();
 
 private:
     std::unique_ptr<EventParser> parser_;

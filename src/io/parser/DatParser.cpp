@@ -153,7 +153,7 @@ namespace event_lib {
         eof_reached_ = true;
     }
 
-    DatFileHeader DatParser::header() const {
+    const DatFileHeader& DatParser::header() const {
         return header_;
     }
 

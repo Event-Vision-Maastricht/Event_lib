@@ -5,6 +5,17 @@
 #include "event_lib/core/event_packet.hpp"
 
 namespace event_lib {
+    // Simple POD header shared across parsers. Derived parser-specific
+    // headers may extend this (e.g., DatFileHeader).
+    struct FileHeader {
+        int width = 0;  // Horizontal size of image sensor array.
+        int height = 0; // Vertical size of image sensor array.
+        std::string date; // Recording Date, format: YYYY-MM-DD HH:MM:SS
+        std::string time;
+        std::string version; // Format version
+        std::string event_type; // Type of event: CD/2d/ExtTrig
+        virtual ~FileHeader() = default;
+    };
     /**
      * @brief parser interface for abstracting parsers for different files. 
      */
@@ -17,7 +28,7 @@ namespace event_lib {
         virtual EventPacket read_packet(std::size_t max_events) = 0;
         virtual bool reset() =0;
         virtual void close() =0;
-
-        //virtual FileHeader header() const;
-    };
+        // Return header information by const-reference. Must remain valid
+        // for the lifetime of the parser instance.
+        virtual const FileHeader& header() const = 0;    };
 }

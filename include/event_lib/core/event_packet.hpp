@@ -42,10 +42,16 @@ namespace event_lib {//TODO: some method or operator to check the differences be
         /**
          * @returns the initial time of the packet
          */
-        long get_packet_start_time();
+        long get_packet_start_time() const;
+
+        Event get_next();
+
+        //get event on from a specific index
+        Event get_event(int idx);
 
     private://TODO: Search alternatives of vector for efficiency and time
         std::vector<Event> events; //event container
+        int current = 0;
     };
 }
 

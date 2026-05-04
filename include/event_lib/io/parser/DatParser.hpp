@@ -11,7 +11,7 @@
 
 namespace event_lib {
 
-struct DatFileHeader {
+struct DatFileHeader final : public FileHeader {
     int width = 0; // Horizontal size of image sensor array.
     int height = 0;// Vertical size of image sensor array.
     std::string date;/////     Recording Date, format: YYYY-MM-DD HH:MM:SS
@@ -32,7 +32,7 @@ public:
     void close() override;
     int get_length();
 
-    DatFileHeader header() const;
+        const DatFileHeader& header() const;
 
 private:
     static void validate_dat_path(const std::string& path);

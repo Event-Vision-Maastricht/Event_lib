@@ -54,4 +54,34 @@ namespace event_lib {
         }
         return parser_->read_packet(max_events);
     }
+
+    int DatasetEventStream::get_width(){
+        if(!parser_) return 0;
+        return parser_->header().width;
+    }
+
+    int DatasetEventStream::get_height(){
+        if(!parser_) return 0;
+        return parser_->header().height;
+    }
+
+    std::string DatasetEventStream::get_date(){
+        if(!parser_) return {};
+        return parser_->header().date;
+    }
+
+    std::string DatasetEventStream::get_init_recording_time(){
+        if(!parser_) return {};
+        return parser_->header().time;
+    }
+
+    std::string DatasetEventStream::get_version(){
+        if(!parser_) return {};
+        return parser_->header().version;
+    }
+
+    std::string DatasetEventStream::get_event_type(){
+        if(!parser_) return {};
+        return parser_->header().event_type;
+    }
 }
