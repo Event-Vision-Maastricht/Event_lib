@@ -3,14 +3,23 @@ Tools for simplifying your event-based life
 
 Overleaf link: https://www.overleaf.com/read/hhtprzkmqqfg#3263d1
 
-##TODO:
-- DatasetEventStream (delete all instances)
+## TODO:
+- raw file parser
+- aedat file parser
+- visualize histogram time window (on progress)
+- visualize histogram event count
+- visualize time window
+- linux support
+- optimization
+- camera parser/stream
+
+
 
 
 #### initial supported files
 - raw  (TODO)
-- dat  (in progress)
-- hdf5 (TODO)
+- dat  (done)
+- aedat (TODO)
 
 
 #### build and testing for windows
@@ -32,9 +41,3 @@ ctest verbose -C debug
 
     -> possible mac, clang default
 
-
-
-
-## planned stream
-
-User-> EventStream (DatEventStream) -> Parser (DatParser) -> Read chunk to return EventPacket

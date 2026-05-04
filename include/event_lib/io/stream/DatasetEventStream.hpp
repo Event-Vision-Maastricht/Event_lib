@@ -18,7 +18,6 @@ public:
     Event next() override;
     bool reset() override;
     void close() override;
-    //    long long get_event_count() const override; //////expensive
 
     EventPacket next_packet(std::size_t max_events = 1024) override;
 

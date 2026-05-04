@@ -24,7 +24,7 @@ namespace event_lib {
         return events.size();
     }
 
-    size_t EventPacket::count_in_range(long long w_start, long long w_end) const {
+    size_t EventPacket::count_in_range(long w_start, long w_end) const {
         return std::count_if(
             events.begin(),
             events.end(),
@@ -34,7 +34,7 @@ namespace event_lib {
         );
     }
 
-    std::vector<Event> EventPacket::get_events_in_range(long long w_start, long long w_end) const {
+    std::vector<Event> EventPacket::get_events_in_range(long w_start, long w_end) const {
         std::vector<Event> result;
         for (const auto& e : events) {
             if (e.timestamp >= w_start && e.timestamp <= w_end) {
@@ -50,6 +50,10 @@ namespace event_lib {
 
     bool EventPacket::is_empty() const {
         return events.empty();
+    }
+
+    long EventPacket::get_packet_start_time() {
+        return events.front().timestamp;
     }
 
 }

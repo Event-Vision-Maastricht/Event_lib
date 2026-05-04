@@ -14,7 +14,7 @@ namespace event_lib {
      * Classic representation of a DVS event with only the basics.
      */
     struct Event {
-        long long timestamp;  //in microseconds, might change to miliseconds
+        long timestamp;  //in miliseconds
         int x;               // X coordinate
         int y;               // y coordinate
         bool polarity;       // true = on, false = off
@@ -23,7 +23,7 @@ namespace event_lib {
         Event() : timestamp(0), x(0), y(0), polarity(false) {}
 
         // Parameterized constructor
-        Event(long long ts, int x_coord, int y_coord, bool pol)
+        Event(long ts, int x_coord, int y_coord, bool pol)
             : timestamp(ts), x(x_coord), y(y_coord), polarity(pol) {}
 
         // Equality operator e1==e2 if ts, x, y and pol are equal, might be needed
@@ -42,13 +42,13 @@ namespace event_lib {
 
     /**
      * @brief Create an event with specified parameters
-     * @param ts Timestamp in microseconds
+     * @param ts Timestamp in miliseconds
      * @param x X coordinate
      * @param y Y coordinate
      * @param polarity Event polarity (true = ON, false = OFF)
      * @return Created Event object
      */
-    Event create_event(long long ts, int x, int y, bool polarity);
+    Event create_event(long  ts, int x, int y, bool polarity);
 
     /**
      * @brief Print event information to output stream
@@ -70,7 +70,7 @@ namespace event_lib {
      * @param e The event
      * @return Timestamp value
      */
-    long long get_timestamp(const Event& e);
+    long get_timestamp(const Event& e);
 
     /**
      * @brief Get X and Y coordinates from event

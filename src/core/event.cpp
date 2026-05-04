@@ -3,7 +3,7 @@
 
 namespace event_lib {
 //ts in ms
-    Event create_event(long long ts, int x, int y, bool polarity) {
+    Event create_event(long ts, int x, int y, bool polarity) {
         return Event(ts, x, y, polarity);
     }
 
@@ -22,7 +22,7 @@ namespace event_lib {
                event.timestamp >= 0;
     }
 
-    long long get_timestamp(const Event& e) {
+    long get_timestamp(const Event& e) {
         return e.timestamp;
     }
 

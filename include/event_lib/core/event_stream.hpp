@@ -42,7 +42,7 @@ namespace event_lib {
         virtual void close() {}
 
         //TODO: Get the total number of events in this stream (check if its known in evk4)
-        virtual long long get_event_count() const {
+        virtual long get_event_count() const {
             return -1;  // Default: unknown, derived classes can override
         }
     };

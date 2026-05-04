@@ -5,15 +5,24 @@
 
 namespace event_lib {
     class visualize{
-        //std::vector<int> make_histogram(const EventPacket& packet, bool colorOn=1);
-        void timew_histogram(const EventPacket& packet, bool colorOn);
-        void timew_histogram(const EventPacket& packet){return timew_histogram(packet, 1);};
+        //default 60 fps, ts in ms, polarity color changes are on
+        void timew_histogram(const EventPacket& packet, bool colorOn, long time_window);
+        void timew_histogram(const EventPacket& packet){return timew_histogram(packet, 1, 16);};
+        void timew_histogram(const EventPacket& packet, bool colorOn){return timew_histogram(packet, colorOn, 16);};
+        void timew_histogram(const EventPacket& packet, long time_window){return timew_histogram(packet, 1, time_window);};
 
-        void eventc_histogram(const EventPacket& packet, bool colorOn);
-        void eventc_histogram(const EventPacket& packet){return eventc_histogram(packet, 1);};
+
+        //default 10k events, oılarity color changes on
+        void eventc_histogram(const EventPacket& packet, bool colorOn, int event_count);
+        void eventc_histogram(const EventPacket& packet){return eventc_histogram(packet, 1, 10000);};
+        void eventc_histogram(const EventPacket& packet, bool colorOn){return eventc_histogram(packet, colorOn, 10000);};
+        void eventc_histogram(const EventPacket& packet, int event_count){return eventc_histogram(packet, 1, event_count);};
+
         
         void make_bi(const EventPacket& packet);
 
         void make_time_surface(const EventPacket& packet);
+
+        //TODO: save video
     };
 }

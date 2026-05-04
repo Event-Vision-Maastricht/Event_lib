@@ -64,7 +64,7 @@ std::string value_after_keyword(const std::string& raw_line, const std::string& 
  */
 int check_int(const std::string& s) {
     try {
-        const long long parsed = std::stoll(s);
+        const long parsed = std::stoll(s);
         if (parsed < 0 || parsed > std::numeric_limits<int>::max()) {
             return 0;
         }
@@ -248,8 +248,8 @@ namespace event_lib {
         std::memcpy(&packed, bytes, 4);
         std::memcpy(&ts32, bytes + 4, 4);
 
-        // Assign timestamp into event (widen to long long)
-        event.timestamp = static_cast<long long>(ts32);
+        // Assign timestamp into event (widen to long)
+        event.timestamp = static_cast<long>(ts32);
         
         // Unpack bits (assume polarity in the top 4 bits)
         const std::uint32_t polarity_bits = (packed >> 28) & 0xFu; // 4 bits

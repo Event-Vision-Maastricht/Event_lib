@@ -28,16 +28,21 @@ namespace event_lib {//TODO: some method or operator to check the differences be
         size_t size() const;
 
         //return number of events in a time window
-        size_t count_in_range(long long w_start, long long w_end) const;
+        size_t count_in_range(long w_start, long w_end) const;
 
         //return events in a time window
-        std::vector<Event> get_events_in_range(long long w_start, long long w_end) const;
+        std::vector<Event> get_events_in_range(long w_start, long w_end) const;
 
         //clean up events
         void clear();
 
         //check if packet empty
         bool is_empty() const;
+
+        /**
+         * @returns the initial time of the packet
+         */
+        long get_packet_start_time();
 
     private://TODO: Search alternatives of vector for efficiency and time
         std::vector<Event> events; //event container
