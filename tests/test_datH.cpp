@@ -2,9 +2,14 @@
 #include <cstdint>
 #include <cassert>
 #include "../include/event_lib/io/parser/DatParser.hpp"
+#include "../include/event_lib/core/event_packet.hpp"
+#include "../include/event_lib/core/event.hpp"
+
 #include <exception>
 
 using namespace event_lib;
+    DatParser parser;
+    EventPacket packet;
 
 bool run_test(const std::string& name, bool result) {
     if (result) {
@@ -22,11 +27,10 @@ bool run_test(const std::string& name, bool result) {
 //             % Height 480
 //             % Width 640
 bool test_header_reading(){
-    DatParser parser;
     try {
         parser.open("C:/Users/user/Desktop/okul/thesi/data/spinner.dat");
-    } catch (...) {
-        std::cerr << "Could not open dat file" << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "Could not open dat file: " << e.what() << std::endl;
         return false;
     }
     auto hdr = parser.header();
@@ -42,17 +46,32 @@ bool test_header_reading(){
         std::cout << "Header mismatch:\n";
         return false;
     }
-    parser.close();
+    //parser.close();
     return true;
 }
 
-bool test_open_file(){
-    return 1;
+bool test_read_event(){
+    try{
+        packet = parser.read_packet(1);
+    }catch(const std::exception& e){
+        std::cerr << "Something went wrong while reading: " << e.what() << std::endl;
+        return false;
+    }
+    if(packet.size() !=1) return false;
+    std::vector<Event> e = packet.get_events();
+    Event ev = e[0];
+
+    std::cout << "First Event:\n"
+        << "  Timestamp: " << ev.timestamp << "\n"
+        << "  Polarity: " << ev.polarity << " \n"
+        << "  X axis: " << ev.x << "\n"
+        << "  Y axis: " << ev.y << std::endl;
+    return true;
 }
 
 int main() {
     run_test("header testing", test_header_reading());
-    run_test("open file", test_open_file());
+    run_test("read one event", test_read_event());
 
     return 0;
 }
