@@ -31,8 +31,7 @@ public:
     bool reset() override;
     void close() override;
     int get_length();
-
-        const DatFileHeader& header() const;
+    const DatFileHeader& header() const;
 
 private:
     static void validate_dat_path(const std::string& path);

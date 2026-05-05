@@ -1,20 +1,29 @@
-#include <iostream>
-#include <cstdint>
-#include <cassert>
+#include "event_lib/processing/visualize.hpp"
 
-//using namespace event_lib;
+#include <cstdlib>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <string>
+
+namespace fs = std::filesystem;
+
+using namespace event_lib;
 
 bool run_test(const std::string& name, bool result) {
     if (result) {
         std::cout << "PASS: " << name << std::endl;
     } else {
         std::cout << "FAIL: " << name << std::endl;
-        exit(1);
+        std::exit(1);
     }
     return result;
 }
 
-int main(){
+
+int main() {
     run_test("helo", 1);
     return 0;
 }

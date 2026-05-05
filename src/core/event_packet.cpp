@@ -52,17 +52,4 @@ namespace event_lib {
         return events.empty();
     }
 
-    long EventPacket::get_packet_start_time() const {
-        return events.front().timestamp;
-    }
-
-    Event EventPacket::get_next(){
-        current++;
-        return events[current-1];
-    }
-
-    Event EventPacket::get_event(int idx){
-        return events[idx];
-    }
-
 }

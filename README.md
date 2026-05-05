@@ -12,6 +12,7 @@ Overleaf link: https://www.overleaf.com/read/hhtprzkmqqfg#3263d1
 - linux support
 - optimization
 - camera parser/stream
+- frame color settings
 
 
 

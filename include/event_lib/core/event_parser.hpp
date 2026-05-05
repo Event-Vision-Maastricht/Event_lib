@@ -30,5 +30,6 @@ namespace event_lib {
         virtual void close() =0;
         // Return header information by const-reference. Must remain valid
         // for the lifetime of the parser instance.
-        virtual const FileHeader& header() const = 0;    };
+        virtual const FileHeader& header() const = 0;    
+    };
 }
