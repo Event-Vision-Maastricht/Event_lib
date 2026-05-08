@@ -3,6 +3,10 @@ Tools for simplifying your event-based life
 
 Overleaf link: https://www.overleaf.com/read/hhtprzkmqqfg#3263d1
 
+
+# Dependencies
+- Opencv
+
 ## TODO:
 - raw file parser
 - aedat file parser
