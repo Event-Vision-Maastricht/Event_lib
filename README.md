@@ -41,4 +41,4 @@ ctest verbose -C debug
 --> gcc linux msvc windows, dont forget to arrange it in Cmake
 
     -> possible mac, clang default
-
+producer-consumer pipeline.

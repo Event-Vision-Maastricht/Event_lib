@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.15)
 project(event_lib VERSION 1.0.0 LANGUAGES CXX)
 
+find_package(OpenCV REQUIRED COMPONENTS core imgproc highgui)
+
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -15,16 +17,21 @@ set(EVENT_LIB_SOURCES
     src/io/stream/DatasetEventStream.cpp
     src/processing/visualize.cpp
     src/processing/Frame.cpp
+    src/processing/FrameQueue.cpp
 )
 
 # Create the library
 add_library(event_lib ${EVENT_LIB_SOURCES})
+
+target_link_libraries(event_lib PUBLIC ${OpenCV_LIBS})
 
 # Set public include directory
 target_include_directories(event_lib PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
+
+target_include_directories(event_lib PUBLIC ${OpenCV_INCLUDE_DIRS})
 
 ################################### Test
 enable_testing()

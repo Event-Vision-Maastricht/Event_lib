@@ -74,3 +74,16 @@ install_manifest.txt
 *~
 .DS_Store
 *.code-workspace
+
+# Ignore CMake/Visual Studio build output directories (include build-cppenv)
+build*/
+build-cppenv/
+
+# Visual Studio/MSBuild artifacts
+.vs/
+*.vcxproj*
+*.sln
+*.user
+*.tlog
+*.lastbuildstate
+*.recipe

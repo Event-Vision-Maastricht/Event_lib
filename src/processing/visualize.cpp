@@ -1,13 +1,16 @@
+#define NOMINMAX
 #include "event_lib/processing/visualize.hpp"
 #include <algorithm>
 #include <iostream>
+#include <opencv2/core.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/videoio.hpp>
+#include <opencv2/imgcodecs.hpp>
 
 ////////////////LAB2B HAS THE TIME WINDOW HISTOGRAM IMPLEMENTATION
 namespace event_lib {
 
     bool visualize::init_metadata(int w, int h, std::string d, std::string t, std::string v, std::string et){
-        initVals_.width = w;
-        initVals_.height = h;
         initVals_.date = d;
         initVals_.time = t;
         initVals_.version = v;
@@ -17,7 +20,10 @@ namespace event_lib {
     }
 
     void visualize::timew_histogram(const EventPacket& packet, bool colorOn, long time_window){
-        if (!initialized) return;
+        if (!initialized) {//TODO get width height from header info
+            //visualize::init_metadata();
+            return;
+        };
 
         Frame frame(initVals_.width, initVals_.height);
         const auto& events = packet.get_events();
@@ -26,6 +32,7 @@ namespace event_lib {
         long start_time = events[0].timestamp;
         long window_end = start_time + time_window;
         bool work_on_frame = false;
+        FrameStr ready_frame;
 
         for (const auto& ev : events) {
             long ev_time = ev.timestamp;
@@ -34,7 +41,9 @@ namespace event_lib {
 
             // if ev_time exceeded, time for next frame
             if (ev_time >= window_end) {
-                frame.finalize_frame(start_time);
+                if (frame.finalize_frame(start_time, ready_frame)) {
+                    frame_queue_.add_frame(std::move(ready_frame));
+                }
                 start_time = ev_time;
 
                 // Move to next window
@@ -43,9 +52,10 @@ namespace event_lib {
             }
         }
         if (work_on_frame) {
-            frame.finalize_frame(start_time);
+            if (frame.finalize_frame(start_time, ready_frame)) {
+                frame_queue_.add_frame(std::move(ready_frame));
+            }
         }
-        show(frame.extract_packet());
     }
 
     void visualize::eventc_histogram(const EventPacket& packet, bool colorOn, int event_count){
@@ -58,6 +68,7 @@ namespace event_lib {
 
         int event_counter = 0;
         long frame_ts = events[0].timestamp;
+        FrameStr ready_frame;
 
         for (const auto& ev : events) {
             frame.add_event(ev);
@@ -65,18 +76,20 @@ namespace event_lib {
 
             // check if we should start new frame
             if (event_counter >= event_count) {
-                frame.finalize_frame(frame_ts);
+                if (frame.finalize_frame(frame_ts, ready_frame)) {
+                    frame_queue_.add_frame(std::move(ready_frame));
+                }
                 frame_ts = ev.timestamp;
 
-                // Reset for next batch
-                frame.reset_frame();
                 event_counter = 0;
             }
         }
         // Save final frame if there are remaining events
-        if (event_counter > 0) frame.finalize_frame(frame_ts);
-
-        show(frame.extract_packet());
+        if (event_counter > 0) {
+            if (frame.finalize_frame(frame_ts, ready_frame)) {
+                frame_queue_.add_frame(std::move(ready_frame));
+            }
+        }
 
     }
 
@@ -89,8 +102,61 @@ namespace event_lib {
     }
 
 
-    void visualize::show(FramePacket fpack){
-        (void)fpack;
-        // TODO: render or persist the frame packet
+    void visualize::show(bool colorOn){
+        if (!initialized) return;
+
+        const std::string window_name = initVals_.event_type.empty() ? "event_lib" : initVals_.event_type;
+        cv::namedWindow(window_name, cv::WINDOW_NORMAL);
+
+        FrameStr frame;
+        while (frame_queue_.wait_and_pop_frame(frame)) {
+            cv::Mat image(initVals_.height, initVals_.width, colorOn ? CV_8UC3 : CV_8UC1, cv::Scalar::all(0));
+
+            int max_value = 1;
+            for (int y = 0; y < initVals_.height; ++y) {
+                for (int x = 0; x < initVals_.width; ++x) {
+                    max_value = std::max(max_value, frame.on_events[y][x]);
+                    max_value = std::max(max_value, frame.off_events[y][x]);
+                }
+            }
+
+            for (int y = 0; y < initVals_.height; ++y) {
+                for (int x = 0; x < initVals_.width; ++x) {
+                    const int on_value = frame.on_events[y][x];
+                    const int off_value = frame.off_events[y][x];
+
+                    if (colorOn) {
+                        // Map ON events to blue channel and OFF events to red channel
+                        const unsigned char blue = static_cast<unsigned char>(std::min(255, (on_value * 255) / max_value));
+                        const unsigned char red = static_cast<unsigned char>(std::min(255, (off_value * 255) / max_value));
+                        image.at<cv::Vec3b>(y, x) = cv::Vec3b(blue, 0, red);
+                    } else {
+                        const int combined = on_value + off_value;
+                        const unsigned char gray = static_cast<unsigned char>(std::min(255, (combined * 255) 
+                            / (2 * max_value)));
+                        image.at<unsigned char>(y, x) = gray;
+                    }
+                }
+            }
+
+            cv::imshow(window_name, image);
+            const int key = cv::waitKey(1);
+            if (key == 27 || key == 'q' || key == 'Q') {
+                break;
+            }
+        }
+
+        cv::destroyWindow(window_name);
+
     }
+
+    // void show_and_save(bool colorOn = true, std::string name){
+    //     //TODO: keep the frames without erasing and save as mp4
+    //     return;
+    // }
+        
+    // void save(bool colorOn = true, std::string name){
+    //     //TODO: just create and save as mp4
+    //     return;
+    // }
 }

@@ -1,7 +1,9 @@
 #pragma once
 
-#include "../core/event_packet.hpp"
+#include "event_lib/core/event.hpp"
+#include "event_lib/core/event_packet.hpp"
 #include "event_lib/processing/Frame.hpp"
+#include "event_lib/processing/FrameQueue.hpp"
 
 #include <string>
 #include <vector>
@@ -43,11 +45,15 @@ namespace event_lib {
 
         void make_time_surface(const EventPacket& packet);
 
+        void show(bool colorOn = true);
+        // void show_and_save(bool colorOn = true, std::string name);
+        // void save(bool colorOn = true, std::string name);
+
         //TODO: save video
 
     private:
         SensorMetadata initVals_;
-        void show(FramePacket fpack);
+        FrameQueue frame_queue_;
 
     };
 }
