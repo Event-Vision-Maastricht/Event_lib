@@ -59,9 +59,14 @@ namespace event_lib {
 
         //TODO: save video
 
+        // Check if stop has been requested (e.g., user closed window)
+        bool is_stop_requested() const { return stop_requested_.load(); }
+
     private:
         const SensorMetadata* metadata_{nullptr};
         FrameQueue frame_queue_;
+        std::atomic<bool> stop_requested_{false};
+
 
     };
 }

@@ -50,13 +50,7 @@ bool test_read_show_eventW(){
     DatasetEventStream streamer("C:/Users/user/Desktop/okul/thesi/data/spinner.dat");
     packet = streamer.next_packet(10000);
     const SensorMetadata& metadata = streamer.metadata();
-
-    // DEBUG: Check what the streamer is reading
-    // std::cout << "DEBUG: streamer.get_width() = " << metadata.width << std::endl;
-    // std::cout << "DEBUG: streamer.get_height() = " << metadata.height << std::endl;
-    // std::cout << "DEBUG: streamer.get_date() = " << metadata.date << std::endl;
-    // std::cout << "DEBUG: streamer.get_init_recording_time() = " << metadata.time << std::endl;
-
+    
     bool visualazie_init = vis.init_metadata(metadata);
     if(!visualazie_init){
         std::cerr << "Could not initialize metadata for visualizer. " << std::endl;
@@ -68,7 +62,62 @@ bool test_read_show_eventW(){
         try {
             while (true) {
                 //std::cerr << "DEBUG: reading packet from stream" << std::endl;
-                vis.enqueue_packet(packet, visualize::Mode::EventCount, true, 0, 1000);
+                vis.eventc_histogram(packet, true, 2500);
+                if (vis.is_stop_requested()) break;  // Exit immediately if user closed window
+                if (!streamer.has_next()) {
+                    break;
+                }
+                packet = streamer.next_packet(10000);
+            }
+
+            vis.finish();
+        } catch (...) {
+            producer_error = std::current_exception();
+            vis.finish();
+        }
+    });
+    
+    try {
+        vis.show(true);
+    } catch (const std::exception& e) {
+        std::cerr << "Visualization stream error: " << e.what() << std::endl;
+        vis.finish();
+        if (producer.joinable()) {
+            producer.join();
+        }
+        return false;
+    }
+
+    if (producer.joinable()) {
+        producer.join();
+    }
+
+    if (producer_error) {
+        try {
+            std::rethrow_exception(producer_error);
+        } catch (const std::exception& e) {
+            std::cerr << "Producer error: " << e.what() << std::endl;
+        }
+        return false;
+    }
+
+    return true;
+}
+
+bool test_read_show_timeW(){
+    DatasetEventStream streamer("C:/Users/user/Desktop/okul/thesi/data/spinner.dat");
+    packet = streamer.next_packet(10000);
+    const SensorMetadata& metadata = streamer.metadata();
+
+    bool visualazie_init = vis.init_metadata(metadata);
+
+    std::exception_ptr producer_error = nullptr;
+    std::thread producer([&]() {
+        try {
+            while (true) {
+                //std::cerr << "DEBUG: reading packet from stream" << std::endl;
+                vis.timew_histogram(packet, true, 60);
+                if (vis.is_stop_requested()) break;  // Exit immediately if user closed window
                 if (!streamer.has_next()) {
                     break;
                 }
@@ -97,20 +146,12 @@ bool test_read_show_eventW(){
         producer.join();
     }
 
-    if (producer_error) {
-        try {
-            std::rethrow_exception(producer_error);
-        } catch (const std::exception& e) {
-            std::cerr << "Producer error: " << e.what() << std::endl;
-        }
-        return false;
-    }
-
     return true;
 }
 
 
 int main() {
-    run_test("visualize_stream", test_read_show_eventW());
+    run_test("visualize_stream_event_window_histogram", test_read_show_eventW());
+    //run_test("visualize_stream_time_window_histogram", test_read_show_timeW());
     return 0;
 }

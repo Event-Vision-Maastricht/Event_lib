@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <iostream>
 #include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/videoio.hpp>
 #include <opencv2/imgcodecs.hpp>
@@ -19,10 +20,8 @@ namespace event_lib {
     }
 
     void visualize::timew_histogram(const EventPacket& packet, bool colorOn, long time_window){
-        if (!initialized) {//TODO get width height from header info
-            //visualize::init_metadata();
-            return;
-        };
+        if (!initialized) return;
+        if(stop_requested_.load()) return;
 
         Frame frame(*metadata_);
         const auto& events = packet.get_events();
@@ -58,10 +57,8 @@ namespace event_lib {
     }
 
     void visualize::eventc_histogram(const EventPacket& packet, bool colorOn, int event_count){
-        if (!initialized) {
-            std::cerr << "DEBUG: metadata not intialized" << std::endl;
-            return;  // Metadata must be initialized before enqueuing packets
-        }
+        if (!initialized) return;
+        if (stop_requested_.load()) return;
 
         Frame frame(*metadata_);
         const auto& events = packet.get_events();
@@ -104,33 +101,6 @@ namespace event_lib {
         // TODO: Implement time surface visualization
     }
 
-    void visualize::enqueue_packet(const EventPacket& packet, Mode mode, bool colorOn, long time_window, int event_count){
-        if (!initialized) {
-            std::cerr << "DEBUG: metadata not intialized" << std::endl;
-            return;  // Metadata must be initialized before enqueuing packets
-        }
-
-        switch(mode){
-            case Mode::TimeWindow:
-                std::cerr << "DEBUG: starting creating frames from time window" << std::endl;
-                timew_histogram(packet, colorOn, time_window);
-                break;
-            case Mode::EventCount:
-                //std::cerr << "DEBUG: starting creating frames from event window" << std::endl;
-                eventc_histogram(packet, colorOn, event_count);
-                break;
-            case Mode::Binary:
-                make_bi(packet);
-                break;
-            case Mode::TimeSurface:
-                make_time_surface(packet);
-                break;
-            default:
-                eventc_histogram(packet, colorOn, event_count);
-                break;
-        }
-    }
-
     void visualize::finish(){
         frame_queue_.close();
     }
@@ -144,6 +114,7 @@ namespace event_lib {
                   << "', event_type = '" << metadata_->event_type << "'" << std::endl;
 
         cv::namedWindow(window_name, cv::WINDOW_NORMAL);
+        //cv::resizeWindow(window_name, metadata_->width * 2, metadata_->height * 2);
 
         FrameStr frame;
         while (frame_queue_.wait_and_pop_frame(frame)) {
@@ -157,6 +128,9 @@ namespace event_lib {
                 }
             }
 
+            const double gain = 1.5;
+            const int minimum_visible = 35;
+
             for (int y = 0; y < metadata_->height; ++y) {
                 for (int x = 0; x < metadata_->width; ++x) {
                     const int on_value = frame.on_events[y][x];
@@ -164,27 +138,34 @@ namespace event_lib {
 
                     if (colorOn) {
                         // Map ON events to blue channel and OFF events to red channel
-                        const unsigned char blue = static_cast<unsigned char>(std::min(255, (on_value * 255) / max_value));
-                        const unsigned char red = static_cast<unsigned char>(std::min(255, (off_value * 255) / max_value));
+                        //const unsigned char blue = static_cast<unsigned char>(std::min(255, (on_value * 255) / max_value));
+                        //const unsigned char red = static_cast<unsigned char>(std::min(255, (off_value * 255) / max_value));
+                        const unsigned char blue = static_cast<unsigned char>(std::min(255.0, std::max(0.0, (on_value * 255.0 * gain) / max_value)));
+                        const unsigned char red = static_cast<unsigned char>(std::min(255.0, std::max(0.0, (off_value * 255.0 * gain) / max_value)));
                         image.at<cv::Vec3b>(y, x) = cv::Vec3b(blue, 0, red);
                     } else {
                         const int combined = on_value + off_value;
                         const unsigned char gray = static_cast<unsigned char>(std::min(255, (combined * 255) 
                             / (2 * max_value)));
+                        // const int scaled = static_cast<int>((combined * 255.0 * gain) / (2.0 * max_value));
+                        // const unsigned char gray = static_cast<unsigned char>(combined > 0 ? std::clamp(std::max(minimum_visible, scaled), 0, 255) : 0);
                         image.at<unsigned char>(y, x) = gray;
                     }
                 }
             }
 
-            cv::imshow(window_name, image);
+            // cv::Mat display_image;
+            // cv::resize(image, display_image, cv::Size(), 4.0, 4.0, cv::INTER_NEAREST);
+            cv::imshow(window_name, image); //display_image);
             const int key = cv::waitKey(1);
             if (key == 27 || key == 'q' || key == 'Q') {
+                stop_requested_ .store(true);
+                frame_queue_.close();
                 break;
             }
         }
 
         cv::destroyWindow(window_name);
-
     }
 
     // void show_and_save(bool colorOn = true, std::string name){

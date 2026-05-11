@@ -3,11 +3,8 @@ Tools for simplifying your event-based life
 
 Overleaf link: https://www.overleaf.com/read/hhtprzkmqqfg#3263d1
 
-#################################################################################################################################
-EVENT_PARSER.H HAS SOME ISSUES AND FILEHEADER IMPLEMENTAATION HAS AN ISSUE FIX IT.
-#################################################################################################################################
 # Dependencies
-- Opencv
+- Opencv (cppEnv)
 
 ## TODO:
 - raw file parser
@@ -40,6 +37,13 @@ running tests (assuming you are in Event_lib folder):
 cd build 
 ctest verbose -C debug
 ```
+
+running a specific test:
+```
+cd build/debug
+.\<test name>.exe
+```
+
 
 
 ---- future notes for me
