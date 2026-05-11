@@ -50,7 +50,7 @@ bool test_read_show_eventW(){
     DatasetEventStream streamer("C:/Users/user/Desktop/okul/thesi/data/spinner.dat");
     packet = streamer.next_packet(10000);
     const SensorMetadata& metadata = streamer.metadata();
-    
+
     bool visualazie_init = vis.init_metadata(metadata);
     if(!visualazie_init){
         std::cerr << "Could not initialize metadata for visualizer. " << std::endl;
@@ -61,12 +61,9 @@ bool test_read_show_eventW(){
     std::thread producer([&]() {
         try {
             while (true) {
-                //std::cerr << "DEBUG: reading packet from stream" << std::endl;
-                vis.eventc_histogram(packet, true, 2500);
+                vis.eventc_histogram(packet, 2500);
                 if (vis.is_stop_requested()) break;  // Exit immediately if user closed window
-                if (!streamer.has_next()) {
-                    break;
-                }
+                if (!streamer.has_next()) break;
                 packet = streamer.next_packet(10000);
             }
 
@@ -116,8 +113,8 @@ bool test_read_show_timeW(){
         try {
             while (true) {
                 //std::cerr << "DEBUG: reading packet from stream" << std::endl;
-                vis.timew_histogram(packet, true, 60);
-                if (vis.is_stop_requested()) break;  // Exit immediately if user closed window
+                vis.timew_histogram(packet, 60);
+                if (vis.is_stop_requested()) break;
                 if (!streamer.has_next()) {
                     break;
                 }
@@ -151,7 +148,7 @@ bool test_read_show_timeW(){
 
 
 int main() {
-    run_test("visualize_stream_event_window_histogram", test_read_show_eventW());
-    //run_test("visualize_stream_time_window_histogram", test_read_show_timeW());
+    //run_test("visualize_stream_event_window_histogram", test_read_show_eventW());
+    run_test("visualize_stream_time_window_histogram", test_read_show_timeW());
     return 0;
 }

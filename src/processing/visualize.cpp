@@ -19,7 +19,7 @@ namespace event_lib {
         return true;
     }
 
-    void visualize::timew_histogram(const EventPacket& packet, bool colorOn, long time_window){
+    void visualize::timew_histogram(const EventPacket& packet, long time_window){
         if (!initialized) return;
         if(stop_requested_.load()) return;
 
@@ -56,7 +56,7 @@ namespace event_lib {
         }
     }
 
-    void visualize::eventc_histogram(const EventPacket& packet, bool colorOn, int event_count){
+    void visualize::eventc_histogram(const EventPacket& packet, int event_count){
         if (!initialized) return;
         if (stop_requested_.load()) return;
 
@@ -109,17 +109,14 @@ namespace event_lib {
     void visualize::show(bool colorOn){
         if (!initialized || metadata_ == nullptr) return;
 
-        const cv::String window_name("event_lib");
-        std::cerr << "DEBUG: show() window name = '" << window_name
-                  << "', event_type = '" << metadata_->event_type << "'" << std::endl;
-
+        std::string window_name = "Event lib";
         cv::namedWindow(window_name, cv::WINDOW_NORMAL);
+
         //cv::resizeWindow(window_name, metadata_->width * 2, metadata_->height * 2);
+        cv::Mat image(metadata_->height, metadata_->width, colorOn ? CV_8UC3 : CV_8UC1, cv::Scalar::all(0));
 
         FrameStr frame;
         while (frame_queue_.wait_and_pop_frame(frame)) {
-            cv::Mat image(metadata_->height, metadata_->width, colorOn ? CV_8UC3 : CV_8UC1, cv::Scalar::all(0));
-
             int max_value = 1;
             for (int y = 0; y < metadata_->height; ++y) {
                 for (int x = 0; x < metadata_->width; ++x) {
@@ -145,8 +142,7 @@ namespace event_lib {
                         image.at<cv::Vec3b>(y, x) = cv::Vec3b(blue, 0, red);
                     } else {
                         const int combined = on_value + off_value;
-                        const unsigned char gray = static_cast<unsigned char>(std::min(255, (combined * 255) 
-                            / (2 * max_value)));
+                        const unsigned char gray = static_cast<unsigned char>(std::min(255, (combined * 255)/(2 * max_value)));
                         // const int scaled = static_cast<int>((combined * 255.0 * gain) / (2.0 * max_value));
                         // const unsigned char gray = static_cast<unsigned char>(combined > 0 ? std::clamp(std::max(minimum_visible, scaled), 0, 255) : 0);
                         image.at<unsigned char>(y, x) = gray;

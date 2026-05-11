@@ -9,8 +9,6 @@ Overleaf link: https://www.overleaf.com/read/hhtprzkmqqfg#3263d1
 ## TODO:
 - raw file parser
 - aedat file parser
-- visualize histogram time window (on progress)
-- visualize histogram event count
 - visualize time window
 - linux support
 - optimization
