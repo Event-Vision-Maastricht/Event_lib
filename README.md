@@ -3,7 +3,9 @@ Tools for simplifying your event-based life
 
 Overleaf link: https://www.overleaf.com/read/hhtprzkmqqfg#3263d1
 
-
+#################################################################################################################################
+EVENT_PARSER.H HAS SOME ISSUES AND FILEHEADER IMPLEMENTAATION HAS AN ISSUE FIX IT.
+#################################################################################################################################
 # Dependencies
 - Opencv
 

@@ -2,24 +2,29 @@
 #include <vector>
 #include <fstream>
 #include <cstring>
+#include <stdexcept>
 
 #include "event_lib/core/event.hpp"
+#include "event_lib/core/sensor_metadata.hpp"
 #include "event_lib/processing/Frame.hpp"
 #include "event_lib/processing/FrameQueue.hpp"
 
 namespace event_lib{
 
     FrameQueue::FrameQueue()
-        : width(0), height(0), start_timestamp(0), end_timestamp(0), closed(false) {}
+        : metadata(nullptr), start_timestamp(0), end_timestamp(0), closed(false) {}
 
-    FrameQueue::FrameQueue(int w, int h)
-        : width(w), height(h), start_timestamp(0), end_timestamp(0), closed(false) {}
+    FrameQueue::FrameQueue(const SensorMetadata& metadata)
+        : metadata(&metadata), start_timestamp(0), end_timestamp(0), closed(false) {
+        if (!metadata.is_valid()) {
+            throw std::runtime_error("FrameQueue: SensorMetadata must have valid width and height > 0");
+        }
+    }
 
     FrameQueue::FrameQueue(FrameQueue&& other) noexcept {
         std::lock_guard<std::mutex> lock(other.mutex_);
         frames = std::move(other.frames);
-        width = other.width;
-        height = other.height;
+        metadata = other.metadata;
         start_timestamp = other.start_timestamp;
         end_timestamp = other.end_timestamp;
         closed = other.closed;
@@ -30,8 +35,7 @@ namespace event_lib{
             std::lock_guard<std::mutex> lock_this(mutex_);
             std::lock_guard<std::mutex> lock_other(other.mutex_);
             frames = std::move(other.frames);
-            width = other.width;
-            height = other.height;
+            metadata = other.metadata;
             start_timestamp = other.start_timestamp;
             end_timestamp = other.end_timestamp;
             closed = other.closed;

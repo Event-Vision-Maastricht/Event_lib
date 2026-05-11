@@ -3,6 +3,8 @@
 #include <cstddef>
 #include <memory>
 #include <string>
+
+#include "event_lib/core/sensor_metadata.hpp"
 #include "../../core/event_stream.hpp"
 #include "event_lib/core/event_parser.hpp"
 //////////////////////    owns the parser, take events send to user as event packet
@@ -21,6 +23,8 @@ public:
 
     EventPacket next_packet(std::size_t max_events = 10000) override;
 
+    const SensorMetadata& metadata() const;
+
     //header operations
     int get_width();
     int get_height();
@@ -31,6 +35,7 @@ public:
 
 private:
     std::unique_ptr<EventParser> parser_;
+    const SensorMetadata* metadata_ptr_{nullptr};
 
 };
 }

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 project(event_lib VERSION 1.0.0 LANGUAGES CXX)
 
-find_package(OpenCV REQUIRED COMPONENTS core imgproc highgui)
+find_package(OpenCV REQUIRED COMPONENTS core highgui imgcodecs videoio)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -24,6 +24,12 @@ set(EVENT_LIB_SOURCES
 add_library(event_lib ${EVENT_LIB_SOURCES})
 
 target_link_libraries(event_lib PUBLIC ${OpenCV_LIBS})
+
+# Conda OpenCV on Windows is often release-only; this avoids Debug symbol
+# name mismatch (cv::debug_build_guard::...) when building with MSVC Debug.
+if (MSVC)
+    target_compile_definitions(event_lib PUBLIC CV_IGNORE_DEBUG_BUILD_GUARD)
+endif()
 
 # Set public include directory
 target_include_directories(event_lib PUBLIC

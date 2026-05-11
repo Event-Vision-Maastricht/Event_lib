@@ -7,18 +7,13 @@
 #include "event_lib/core/event.hpp"
 #include "event_lib/core/event_packet.hpp"
 #include "event_lib/core/event_parser.hpp"
+#include "event_lib/core/sensor_metadata.hpp"
 //////////////     decode data
 
 namespace event_lib {
 
-struct DatFileHeader final : public FileHeader {
-    int width = 0; // Horizontal size of image sensor array.
-    int height = 0;// Vertical size of image sensor array.
-    std::string date;/////     Recording Date, format: YYYY-MM-DD HH:MM:SS
-    std::string time;
-    std::string version;// Format version
-    std::string event_type; //Type of event: CD/2d/ExtTrig
-};
+// Use SensorMetadata directly; DatFileHeader is kept as an alias for backward compatibility
+using DatFileHeader = SensorMetadata;
 //The event size is 8 for all those types.
 class DatParser final : public EventParser{
 public:

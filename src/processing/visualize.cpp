@@ -10,11 +10,10 @@
 ////////////////LAB2B HAS THE TIME WINDOW HISTOGRAM IMPLEMENTATION
 namespace event_lib {
 
-    bool visualize::init_metadata(int w, int h, std::string d, std::string t, std::string v, std::string et){
-        initVals_.date = d;
-        initVals_.time = t;
-        initVals_.version = v;
-        initVals_.event_type = et;
+    bool visualize::init_metadata(const SensorMetadata& metadata){
+        metadata_ = &metadata;
+        // initialize queue with sensor dimensions
+        frame_queue_ = FrameQueue(metadata);
         initialized = true;
         return true;
     }
@@ -25,7 +24,7 @@ namespace event_lib {
             return;
         };
 
-        Frame frame(initVals_.width, initVals_.height);
+        Frame frame(*metadata_);
         const auto& events = packet.get_events();
         if (events.empty()) return;
 
@@ -59,9 +58,12 @@ namespace event_lib {
     }
 
     void visualize::eventc_histogram(const EventPacket& packet, bool colorOn, int event_count){
-        if (!initialized) return;
+        if (!initialized) {
+            std::cerr << "DEBUG: metadata not intialized" << std::endl;
+            return;  // Metadata must be initialized before enqueuing packets
+        }
 
-        Frame frame(initVals_.width, initVals_.height);
+        Frame frame(*metadata_);
         const auto& events = packet.get_events();
 
         if (events.empty()) return;
@@ -84,6 +86,7 @@ namespace event_lib {
                 event_counter = 0;
             }
         }
+        // std::cerr << "DEBUG: added events from current package, finalized frame" << std::endl;
         // Save final frame if there are remaining events
         if (event_counter > 0) {
             if (frame.finalize_frame(frame_ts, ready_frame)) {
@@ -101,27 +104,61 @@ namespace event_lib {
         // TODO: Implement time surface visualization
     }
 
+    void visualize::enqueue_packet(const EventPacket& packet, Mode mode, bool colorOn, long time_window, int event_count){
+        if (!initialized) {
+            std::cerr << "DEBUG: metadata not intialized" << std::endl;
+            return;  // Metadata must be initialized before enqueuing packets
+        }
+
+        switch(mode){
+            case Mode::TimeWindow:
+                std::cerr << "DEBUG: starting creating frames from time window" << std::endl;
+                timew_histogram(packet, colorOn, time_window);
+                break;
+            case Mode::EventCount:
+                //std::cerr << "DEBUG: starting creating frames from event window" << std::endl;
+                eventc_histogram(packet, colorOn, event_count);
+                break;
+            case Mode::Binary:
+                make_bi(packet);
+                break;
+            case Mode::TimeSurface:
+                make_time_surface(packet);
+                break;
+            default:
+                eventc_histogram(packet, colorOn, event_count);
+                break;
+        }
+    }
+
+    void visualize::finish(){
+        frame_queue_.close();
+    }
+
 
     void visualize::show(bool colorOn){
-        if (!initialized) return;
+        if (!initialized || metadata_ == nullptr) return;
 
-        const std::string window_name = initVals_.event_type.empty() ? "event_lib" : initVals_.event_type;
+        const cv::String window_name("event_lib");
+        std::cerr << "DEBUG: show() window name = '" << window_name
+                  << "', event_type = '" << metadata_->event_type << "'" << std::endl;
+
         cv::namedWindow(window_name, cv::WINDOW_NORMAL);
 
         FrameStr frame;
         while (frame_queue_.wait_and_pop_frame(frame)) {
-            cv::Mat image(initVals_.height, initVals_.width, colorOn ? CV_8UC3 : CV_8UC1, cv::Scalar::all(0));
+            cv::Mat image(metadata_->height, metadata_->width, colorOn ? CV_8UC3 : CV_8UC1, cv::Scalar::all(0));
 
             int max_value = 1;
-            for (int y = 0; y < initVals_.height; ++y) {
-                for (int x = 0; x < initVals_.width; ++x) {
+            for (int y = 0; y < metadata_->height; ++y) {
+                for (int x = 0; x < metadata_->width; ++x) {
                     max_value = std::max(max_value, frame.on_events[y][x]);
                     max_value = std::max(max_value, frame.off_events[y][x]);
                 }
             }
 
-            for (int y = 0; y < initVals_.height; ++y) {
-                for (int x = 0; x < initVals_.width; ++x) {
+            for (int y = 0; y < metadata_->height; ++y) {
+                for (int x = 0; x < metadata_->width; ++x) {
                     const int on_value = frame.on_events[y][x];
                     const int off_value = frame.off_events[y][x];
 

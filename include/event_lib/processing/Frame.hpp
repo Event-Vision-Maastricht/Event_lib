@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "event_lib/core/event.hpp"
+#include "event_lib/core/sensor_metadata.hpp"
 
 namespace event_lib{
     // Frame representation with polarity support
@@ -21,7 +22,7 @@ namespace event_lib{
     // Efficient frame generator for event batching
     class Frame {
     public:
-        Frame(int width, int height);
+        Frame(const SensorMetadata& metadata);
         ~Frame();
 
         // Add an event to the current frame
@@ -43,9 +44,8 @@ namespace event_lib{
     private:
         void ensure_frame_storage(FrameStr& frame);
 
+        const SensorMetadata* metadata_{nullptr};
         FrameStr current_frame_;
-        int width_;
-        int height_;
         int total_events_;
         int on_events_count_;
         int off_events_count_;

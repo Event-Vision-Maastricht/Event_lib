@@ -154,6 +154,8 @@ namespace event_lib {
     }
 
     const DatFileHeader& DatParser::header() const {
+        // std::cerr << "DEBUG: DatParser::header() called. this=" << this << ", &header_=" << &header_
+        //           << ", header_.width=" << header_.width << ", header_.height=" << header_.height << std::endl;
         return header_;
     }
 
@@ -256,7 +258,8 @@ namespace event_lib {
         const std::uint32_t y_bits = (packed >> 14) & 0x3FFFu; // next 14 bits
         const std::uint32_t x_bits = packed & 0x3FFFu; // lowest 14 bits
 
-        if(y_bits>header_.height || x_bits>header_.width){
+        if (y_bits >= static_cast<std::uint32_t>(header_.height) ||
+            x_bits >= static_cast<std::uint32_t>(header_.width)) {
             throw std::runtime_error("Coordinates cannot be bigger than limits");
         }
 

@@ -1,4 +1,7 @@
 #include "event_lib/processing/visualize.hpp"
+#include "event_lib/core/sensor_metadata.hpp"
+#include "event_lib/io/stream/DatasetEventStream.hpp"
+#include "event_lib/core/sensor_metadata.hpp"
 
 #include <cstdlib>
 #include <filesystem>
@@ -7,10 +10,13 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <thread>
 
 namespace fs = std::filesystem;
 
 using namespace event_lib;
+EventPacket packet;
+visualize vis;
 
 bool run_test(const std::string& name, bool result) {
     if (result) {
@@ -22,8 +28,89 @@ bool run_test(const std::string& name, bool result) {
     return result;
 }
 
+// bool test_init_metadata(){
+//      bool visualazie_init = vis.init_metadata(streamer.get_width(),streamer.get_height(),
+//      streamer.get_date(), streamer.get_init_recording_time(), streamer.get_version(), streamer.get_event_type());
+//     if(!visualazie_init){
+//         std::cerr << "Could not initialize metadata for visualizer. " << std::endl;
+//         return false;
+//     }
+
+    
+
+//         if(hdr.event_type != "CD" || hdr.version != "2" ||hdr.date!="2020-09-14" || hdr.time!="16:03:08" ||hdr.height != 480 || hdr.width != 640){
+//         std::cout << "Header mismatch:\n";
+//         return false;
+//     }
+
+//     return true;
+// }
+
+bool test_read_show_eventW(){
+    DatasetEventStream streamer("C:/Users/user/Desktop/okul/thesi/data/spinner.dat");
+    packet = streamer.next_packet(10000);
+    const SensorMetadata& metadata = streamer.metadata();
+
+    // DEBUG: Check what the streamer is reading
+    // std::cout << "DEBUG: streamer.get_width() = " << metadata.width << std::endl;
+    // std::cout << "DEBUG: streamer.get_height() = " << metadata.height << std::endl;
+    // std::cout << "DEBUG: streamer.get_date() = " << metadata.date << std::endl;
+    // std::cout << "DEBUG: streamer.get_init_recording_time() = " << metadata.time << std::endl;
+
+    bool visualazie_init = vis.init_metadata(metadata);
+    if(!visualazie_init){
+        std::cerr << "Could not initialize metadata for visualizer. " << std::endl;
+        return false;
+    }
+
+    std::exception_ptr producer_error = nullptr;
+    std::thread producer([&]() {
+        try {
+            while (true) {
+                //std::cerr << "DEBUG: reading packet from stream" << std::endl;
+                vis.enqueue_packet(packet, visualize::Mode::EventCount, true, 0, 1000);
+                if (!streamer.has_next()) {
+                    break;
+                }
+                packet = streamer.next_packet(10000);
+            }
+
+            vis.finish();
+        } catch (...) {
+            producer_error = std::current_exception();
+            vis.finish();
+        }
+    });
+
+    try {
+        vis.show(true);
+    } catch (const std::exception& e) {
+        std::cerr << "Visualization stream error: " << e.what() << std::endl;
+        vis.finish();
+        if (producer.joinable()) {
+            producer.join();
+        }
+        return false;
+    }
+
+    if (producer.joinable()) {
+        producer.join();
+    }
+
+    if (producer_error) {
+        try {
+            std::rethrow_exception(producer_error);
+        } catch (const std::exception& e) {
+            std::cerr << "Producer error: " << e.what() << std::endl;
+        }
+        return false;
+    }
+
+    return true;
+}
+
 
 int main() {
-    run_test("helo", 1);
+    run_test("visualize_stream", test_read_show_eventW());
     return 0;
 }

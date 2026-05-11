@@ -1,6 +1,7 @@
 #include "event_lib/core/event_packet.hpp"
 #include "event_lib/io/stream/DatasetEventStream.hpp"
 #include "event_lib/io/parser/EventParserFactory.hpp"
+#include <iostream>
 #include <stdexcept>
 ///////////////////// Ideas for future, supporting bigger files easily //////////////////////
 // - Lazy Loading: Instead of preloading, read events on-demand in next().
@@ -12,8 +13,14 @@
 
 namespace event_lib {
     DatasetEventStream::DatasetEventStream(const std::string& path) {
+        std::cerr << "DEBUG: DatasetEventStream constructor called with path: " << path << std::endl;
         parser_ = EventParserFactory::create_parser(path);
+        std::cerr << "DEBUG: Parser created successfully" << std::endl;
         parser_->open(path);
+        std::cerr << "DEBUG: Parser opened file successfully" << std::endl;
+        metadata_ptr_ = &parser_->header();
+        std::cerr << "DEBUG: After open - width=" << metadata_ptr_->width << ", height=" << metadata_ptr_->height
+            << ", date='" << metadata_ptr_->date << "'" << std::endl;
     }
 
     DatasetEventStream::~DatasetEventStream(){
@@ -55,33 +62,34 @@ namespace event_lib {
         return parser_->read_packet(max_events);
     }
 
+    const SensorMetadata& DatasetEventStream::metadata() const {
+        if (!metadata_ptr_) {
+            throw std::runtime_error("DatasetEventStream metadata is not available.");
+        }
+        return *metadata_ptr_;
+    }
+
     int DatasetEventStream::get_width(){
-        if(!parser_) return 0;
-        return parser_->header().width;
+        return metadata().width;
     }
 
     int DatasetEventStream::get_height(){
-        if(!parser_) return 0;
-        return parser_->header().height;
+        return metadata().height;
     }
 
     std::string DatasetEventStream::get_date(){
-        if(!parser_) return {};
-        return parser_->header().date;
+        return metadata().date;
     }
 
     std::string DatasetEventStream::get_init_recording_time(){
-        if(!parser_) return {};
-        return parser_->header().time;
+        return metadata().time;
     }
 
     std::string DatasetEventStream::get_version(){
-        if(!parser_) return {};
-        return parser_->header().version;
+        return metadata().version;
     }
 
     std::string DatasetEventStream::get_event_type(){
-        if(!parser_) return {};
-        return parser_->header().event_type;
+        return metadata().event_type;
     }
 }

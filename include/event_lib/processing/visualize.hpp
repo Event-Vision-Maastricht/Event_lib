@@ -2,6 +2,7 @@
 
 #include "event_lib/core/event.hpp"
 #include "event_lib/core/event_packet.hpp"
+#include "event_lib/core/sensor_metadata.hpp"
 #include "event_lib/processing/Frame.hpp"
 #include "event_lib/processing/FrameQueue.hpp"
 
@@ -12,20 +13,27 @@
 
 namespace event_lib {
 
-    struct SensorMetadata{
-        int width;
-        int height;
-        std::string date;/////     Recording Date, format: YYYY-MM-DD HH:MM:SS
-        std::string time;
-        std::string version;// Format version
-        std::string event_type; //Type of event: CD/2d/ExtTrig
-    };
-
     class visualize{
     public:
         bool initialized = false;
 
-        bool init_metadata(int w, int h, std::string d, std::string t, std::string v, std::string et);
+        enum class Mode {
+            TimeWindow,
+            EventCount,
+            Binary,
+            TimeSurface
+        };
+
+        bool init_metadata(const SensorMetadata& metadata);
+
+        // Enqueue a packet using a chosen generation mode; this lets producers
+        // push frames while `show()` is running as a consumer.
+        void enqueue_packet(const EventPacket& packet, Mode mode = Mode::EventCount,
+                    bool colorOn = true, long time_window = 16, int event_count = 10000);
+
+        // Signal that no more frames will be produced. `show()` will exit once
+        // the queue is drained.
+        void finish();
 
         //default 60 fps, ts in ms, polarity color changes are on
         void timew_histogram(const EventPacket& packet, bool colorOn, long time_window);
@@ -52,7 +60,7 @@ namespace event_lib {
         //TODO: save video
 
     private:
-        SensorMetadata initVals_;
+        const SensorMetadata* metadata_{nullptr};
         FrameQueue frame_queue_;
 
     };

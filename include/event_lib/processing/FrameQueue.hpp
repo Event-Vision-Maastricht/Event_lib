@@ -9,6 +9,7 @@
 #include <condition_variable>
 
 #include "event_lib/core/event.hpp"
+#include "event_lib/core/sensor_metadata.hpp"
 #include "event_lib/processing/Frame.hpp"
 
 namespace event_lib{
@@ -16,14 +17,13 @@ namespace event_lib{
     // Frame Packet: FIFO container for completed frames
     struct FrameQueue {
         std::deque<FrameStr> frames;
-        int width;
-        int height;
+        const SensorMetadata* metadata;
         long start_timestamp;
         long end_timestamp;
         bool closed;
 
         FrameQueue();
-        FrameQueue(int w, int h);
+        FrameQueue(const SensorMetadata& metadata);
 
         // Non-copyable, movable
         FrameQueue(const FrameQueue& other) = delete;
