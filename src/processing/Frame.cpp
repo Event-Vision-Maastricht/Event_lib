@@ -49,6 +49,22 @@ namespace event_lib {
         ++total_events_;
     }
 
+    //Switch to float or double if you want the decay state itself to 
+    //remain continuous and accumulate properly.
+    void Frame::decay_frame(double amount){
+        for (int i = 0; i < metadata_->height; i++) {
+            for (int j = 0; j < metadata_->width; j++) {
+                current_frame_.on_events[i][j] = static_cast<uint8_t>(
+                    current_frame_.on_events[i][j] * amount
+                );
+
+                current_frame_.off_events[i][j] = static_cast<uint8_t>(
+                    current_frame_.off_events[i][j] * amount
+                );
+            }
+        }
+    }
+
     bool Frame::finalize_frame(long timestamp, FrameStr& output_frame) {
         if (total_events_ == 0) {
             return false;

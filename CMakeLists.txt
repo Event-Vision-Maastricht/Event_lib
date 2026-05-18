@@ -17,7 +17,6 @@ set(EVENT_LIB_SOURCES
     src/io/stream/DatasetEventStream.cpp
     src/processing/visualize.cpp
     src/processing/Frame.cpp
-    src/processing/FrameQueue.cpp
 )
 
 # Create the library

@@ -27,6 +27,8 @@ namespace event_lib{
 
         // Add an event to the current frame
         void add_event(const Event& ev);
+        
+        void decay_frame(double amount);
 
         bool finalize_frame(long timestamp, FrameStr& output_frame);
 
