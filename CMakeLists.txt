@@ -15,8 +15,9 @@ set(EVENT_LIB_SOURCES
     src/io/parser/EventParserFactory.cpp
     src/io/parser/DatParser.cpp
     src/io/stream/DatasetEventStream.cpp
-    src/processing/visualize.cpp
+    src/processing/DisplayMode.cpp
     src/processing/Frame.cpp
+    src/processing/Window.cpp
 )
 
 # Create the library

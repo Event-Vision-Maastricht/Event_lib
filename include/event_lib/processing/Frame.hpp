@@ -5,6 +5,7 @@
 #include <fstream>
 #include <cstring>
 #include <mutex>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -38,10 +39,15 @@ namespace event_lib{
         // Reset current frame (clear all counters)
         void reset_frame();
 
-        // Get frame statistics
+        // Get-setters frame statistics
         int get_total_events() const;
         int get_on_events() const;
         int get_off_events() const;
+        bool is_dirty() const;
+        bool consume_dirty();
+        void set_dirty(bool newDirty);
+        long get_last_update() const;
+        const SensorMetadata& get_metadata() const;
 
     private:
         void ensure_frame_storage(FrameStr& frame);
@@ -51,5 +57,6 @@ namespace event_lib{
         int total_events_;
         int on_events_count_;
         int off_events_count_;
+        bool is_dirty_ = false;
     };
 }

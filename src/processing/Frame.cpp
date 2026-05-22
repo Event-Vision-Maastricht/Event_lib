@@ -52,6 +52,10 @@ namespace event_lib {
     //Switch to float or double if you want the decay state itself to 
     //remain continuous and accumulate properly.
     void Frame::decay_frame(double amount){
+        if (metadata_ == nullptr) {
+            return;
+        }
+
         for (int i = 0; i < metadata_->height; i++) {
             for (int j = 0; j < metadata_->width; j++) {
                 current_frame_.on_events[i][j] = static_cast<uint8_t>(
@@ -112,6 +116,29 @@ namespace event_lib {
         return off_events_count_;
     }
 
+    bool Frame::is_dirty() const {
+        return is_dirty_;
+    }
+
+    bool Frame::consume_dirty() {
+        const bool was_dirty = is_dirty_;
+        is_dirty_ = false;
+        return was_dirty;
+    }
+
+    void Frame::set_dirty(bool newDirty){
+        is_dirty_= newDirty;
+    }
+
+    long Frame::get_last_update() const {
+        return current_frame_.timestamp;
+    }
+
+    const SensorMetadata& Frame::get_metadata() const {
+        return *metadata_;
+    }
+
+    
     void Frame::ensure_frame_storage(FrameStr& frame) {
         if (metadata_ == nullptr) {
             return;
