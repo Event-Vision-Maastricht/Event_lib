@@ -21,7 +21,7 @@ namespace event_lib{
                 const std::string& windowName = "Event Lib",
                 std::shared_ptr<std::atomic<bool>> stopFlag = nullptr);
             // Shows the current frame and performs a small idle decay when no new frame was published.
-            void show_frame(long frame_time);
+            void show_frame();
             void finish();
 
         //TODO: save video
@@ -30,7 +30,7 @@ namespace event_lib{
 
         private:
             std::chrono::steady_clock::time_point last_decay_;
-            double idle_decay_amount_{0.97};
+            double idle_decay_amount_{0.85};
             std::string window_name_ = "Event Lib";
             bool color_on_{true};
             cv::Mat image_;

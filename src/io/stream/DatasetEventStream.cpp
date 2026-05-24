@@ -13,14 +13,14 @@
 
 namespace event_lib {
     DatasetEventStream::DatasetEventStream(const std::string& path) {
-        std::cerr << "DEBUG: DatasetEventStream constructor called with path: " << path << std::endl;
+        // std::cerr << "DEBUG: DatasetEventStream constructor called with path: " << path << std::endl;
         parser_ = EventParserFactory::create_parser(path);
-        std::cerr << "DEBUG: Parser created successfully" << std::endl;
+        // std::cerr << "DEBUG: Parser created successfully" << std::endl;
         parser_->open(path);
-        std::cerr << "DEBUG: Parser opened file successfully" << std::endl;
+        // std::cerr << "DEBUG: Parser opened file successfully" << std::endl;
         metadata_ptr_ = &parser_->header();
-        std::cerr << "DEBUG: After open - width=" << metadata_ptr_->width << ", height=" << metadata_ptr_->height
-            << ", date='" << metadata_ptr_->date << "'" << std::endl;
+        // std::cerr << "DEBUG: After open - width=" << metadata_ptr_->width << ", height=" << metadata_ptr_->height
+        //     << ", date='" << metadata_ptr_->date << "'" << std::endl;
     }
 
     DatasetEventStream::~DatasetEventStream(){
