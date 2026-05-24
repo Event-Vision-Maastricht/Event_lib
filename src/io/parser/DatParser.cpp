@@ -188,12 +188,16 @@ namespace event_lib {
 
             const std::string payload = line.substr(1);
 
+            ////TODO: seems like non-cd events also work?? search.
             // % Data file containing CD events.
             std::string  t = value_after_keyword(payload, "Data file containing");
             if (!t.empty()) {
                 std::size_t space_pos = t.find(' ');
                 if (space_pos != std::string::npos) t = t.substr(0, space_pos);
-                if(t != "CD") throw std::runtime_error("Only CD type of events, not " + t);
+                if(t != "CD") {
+                    std::cerr << "DEBUG: The event type is not CD, therefore not supported: " << t << std::endl;
+                    //throw std::runtime_error("Only CD type of events, not " + t);
+                }
                 header.event_type = t;
                 continue;
             }

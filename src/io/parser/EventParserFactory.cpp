@@ -1,5 +1,6 @@
 #include "event_lib/io/parser/EventParserFactory.hpp"
 #include "event_lib/io/parser/DatParser.hpp"
+#include "event_lib/io/parser/RawParser.hpp"
 #include <filesystem>
 #include <stdexcept>
 

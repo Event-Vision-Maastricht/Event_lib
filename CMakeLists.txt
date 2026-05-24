@@ -14,6 +14,7 @@ set(EVENT_LIB_SOURCES
     src/core/event_packet.cpp
     src/io/parser/EventParserFactory.cpp
     src/io/parser/DatParser.cpp
+    src/io/parser/RawParser.cpp
     src/io/stream/DatasetEventStream.cpp
     src/processing/DisplayMode.cpp
     src/processing/Frame.cpp

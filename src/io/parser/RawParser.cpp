@@ -1,6 +1,21 @@
 #include "event_lib/io/parser/RawParser.hpp"
-#include <fstream>
+#include <array>
+#include <cstdint>
+#include <cctype>
+#include <cstring>
+#include <filesystem>
+#include <limits>
 #include <stdexcept>
+#include <string>
+
+/////////////source: chatgpt !!!!!!! non trustable !!!!!!
+// | Sensor            | Resolution |
+// | ----------------- | ---------- |
+// | Gen3              | 640×480    |
+// | Gen4 HD           | 1280×720  -> evk4 resolution true data
+// | DAVIS346          | 346×260    |
+// | DVXplorer         | 640×480    |
+// | Prophesee GenX320 | 320×320    |
 
 namespace {
 
@@ -49,11 +64,18 @@ int check_int(const std::string& s) {
 namespace event_lib {
     RawParser::~RawParser(){close();}
 
-    void RawParser::open(const std::string& path){}
+    void RawParser::open(const std::string& path){
+        return;
+    }
 
-    bool RawParser::has_more() const{}
+    bool RawParser::has_more() const{
+        return false;
+    }
 
-    EventPacket RawParser::read_packet(std::size_t max_events){}
+    EventPacket RawParser::read_packet(std::size_t max_events){
+        EventPacket packet;
+        return packet;
+    }
 
     /**
      * % Date 2020-09-14 09:03:25
@@ -64,9 +86,15 @@ namespace event_lib {
      * % system_ID 21
      * % evt 2.0
      */
-    RawFileHeader RawParser::read_header() {}
+    RawFileHeader RawParser::read_header() {
+        RawFileHeader header;
+        return header;
+    }
 
-    Event RawParser::decode_event(const unsigned char* bytes) const {}
+    Event RawParser::decode_event(const unsigned char* bytes) const {
+        Event e;
+        return e;
+    }
     
     bool RawParser::reset() {
         if (!file_.is_open()) return false;
