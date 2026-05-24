@@ -10,8 +10,7 @@ namespace event_lib {
         const std::string ext = file_path.extension().string();
 
         if (ext == ".dat") return std::make_unique<DatParser>();
-        if (ext == ".raw") throw std::runtime_error("Raw parser not implemented yet: " + path);
-        //return std::make_unique<RawParser>();
+        if (ext == ".raw") return std::make_unique<RawParser>();
         if (ext == ".hdf5" || ext == ".h5") throw std::runtime_error("Hdf5 parser not implemented yet: " + path);
         //return std::make_unique<HdfParser>();
         
