@@ -172,6 +172,7 @@ namespace event_lib {
 
     DatFileHeader DatParser::read_header() {
         DatFileHeader header;
+        header.file_format = "dat";
 
         std::string line;
         while (true) {
@@ -198,13 +199,14 @@ namespace event_lib {
                     std::cerr << "DEBUG: The event type is not CD, therefore not supported: " << t << std::endl;
                     //throw std::runtime_error("Only CD type of events, not " + t);
                 }
-                header.event_type = t;
+                header.extra.emplace("data file containing",t);
                 continue;
             }
+
             
             std::string v = value_after_keyword(payload, "Version");
             if (!v.empty()) {
-                header.version = v;
+                header.extra.emplace("version", v);
                 continue;
             }
 

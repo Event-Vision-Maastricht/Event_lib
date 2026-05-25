@@ -30,8 +30,7 @@ public:
     int get_height();
     std::string get_date();
     std::string get_init_recording_time();
-    std::string get_version();
-    std::string get_event_type();
+
 
 private:
     std::unique_ptr<EventParser> parser_;

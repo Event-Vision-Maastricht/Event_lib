@@ -85,11 +85,4 @@ namespace event_lib {
         return metadata().time;
     }
 
-    std::string DatasetEventStream::get_version(){
-        return metadata().version;
-    }
-
-    std::string DatasetEventStream::get_event_type(){
-        return metadata().event_type;
-    }
 }

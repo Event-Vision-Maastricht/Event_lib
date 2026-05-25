@@ -2,20 +2,12 @@
 #include <array>
 #include <cstdint>
 #include <cctype>
+#include <algorithm>
 #include <cstring>
 #include <filesystem>
 #include <limits>
 #include <stdexcept>
 #include <string>
-
-/////////////source: chatgpt !!!!!!! non trustable !!!!!!
-// | Sensor            | Resolution |
-// | ----------------- | ---------- |
-// | Gen3              | 640×480    |
-// | Gen4 HD           | 1280×720  -> evk4 resolution true data
-// | DAVIS346          | 346×260    |
-// | DVXplorer         | 640×480    |
-// | Prophesee GenX320 | 320×320    |
 
 namespace {
 
@@ -88,7 +80,115 @@ namespace event_lib {
      */
     RawFileHeader RawParser::read_header() {
         RawFileHeader header;
+        header.file_format = "raw";
+
+        std::string line;
+        while (true) {
+            const std::streampos line_start_pos = file_.tellg();
+            if (!std::getline(file_, line)) break;
+
+            if (line.empty() || line[0] != '%') {
+                file_.clear();
+                file_.seekg(line_start_pos, std::ios::beg);
+                return header;
+            }
+
+            const std::string payload = line.substr(1);
+            std::size_t sp = payload.find(' ');
+            std::string key, val;
+            if (sp != std::string::npos) {
+                key = payload.substr(0, sp);
+                val = payload.substr(sp + 1);
+                if (!val.empty() && val.back() == '.') val.pop_back();
+            } else {
+                key = payload;
+                val.clear();
+            }
+
+            if (key == "Date") {
+                const std::size_t time_separator = val.find(' ');
+                header.time = time_separator == std::string::npos ? std::string{} : val.substr(time_separator + 1);
+                header.date = val.substr(0, time_separator);
+                header.extra.emplace(key, val);
+                continue;
+            }
+
+            if (key == "Width") {
+                header.width = check_int(val);
+                header.extra.emplace(key, val);
+                continue;
+            }
+
+            if (key == "Height") {
+                header.height = check_int(val);
+                header.extra.emplace(key, val);
+                continue;
+            }
+
+            if (key == "evt") {
+                header.version = val;
+                header.extra.emplace(key, val);
+                continue;
+            }
+
+            if(key == "plugin_name"){
+                std::array<int,2> r = find_geometry(val);
+                header.width = r[0];
+                header.height = r[1];
+                continue;
+                
+            }
+
+            header.extra.emplace(key, val);
+        }
+
         return header;
+    }
+
+    /////////////source: chatgpt !!!!!!! non trustable !!!!!!
+    // | Sensor            | Resolution |
+    // | ----------------- | ---------- |
+    // | Gen3              | 640×480    |
+    // | Gen4 HD           | 1280×720  -> evk4 resolution true data
+    // | DAVIS346          | 346×260    |
+    // | DVXplorer         | 640×480    |
+    // | Prophesee GenX320 | 320×320    |
+    /**
+     * possible names to cameras:
+     * hal_plugin_gen3_fx3
+     * hal_plugin_gen41_evk3
+     */
+    std::array<int, 2> RawParser::find_geometry(const std::string& cameraName){
+        //default since this is the camera used by uni
+        std::array<int,2> r = {1280,720};
+        if (cameraName.empty()) return r;
+        std::string s = cameraName;
+        // to lower
+        std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return static_cast<char>(std::tolower(c)); });
+
+        if (s.find("gen3") != std::string::npos || s.find("prophesee") != std::string::npos && s.find("320") == std::string::npos) {
+            r = {640,480};
+            return r;
+        }
+        if (s.find("gen4") != std::string::npos || s.find("evk4") != std::string::npos || s.find("hd") != std::string::npos) {
+            r = {1280,720};
+            return r;
+        }
+        if (s.find("davis") != std::string::npos || s.find("346") != std::string::npos) {
+            r = {346,260};
+            return r;
+        }
+        if (s.find("dvxplorer") != std::string::npos) {
+            r = {640,480};
+            return r;
+        }
+        if (s.find("genx320") != std::string::npos || s.find("320") != std::string::npos) {
+            r = {320,320};
+            return r;
+        }
+        
+
+        return r;
     }
 
     Event RawParser::decode_event(const unsigned char* bytes) const {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <string>
 #include <vector>
@@ -24,6 +25,7 @@ public:
     void close() override;
     int get_length();
     const RawFileHeader& header() const;
+	std::array<int, 2> find_geometry(const std::string& cameraName);
 
 private:
     static void validate_raw_path(const std::string& path);

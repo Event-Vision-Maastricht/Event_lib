@@ -34,9 +34,11 @@ bool test_header_reading(){
         return false;
     }
     auto hdr = parser.header();
+    std::string event_type = hdr.get_extra_or("data file containing");
+    std::string version = hdr.get_extra_or("version");
         std::cout << "Header Processed:\n"
-        << "  type: " << hdr.event_type << " (expected: CD)\n"
-        << "  version: " << hdr.version << " (expected: 2)\n"
+        << "  type: " << event_type << " (expected: CD)\n"
+        << "  version: " << version << " (expected: 2)\n"
         << "  date: " << hdr.date << "(expected: 2020-09-14)\n"
         << "  time: " << hdr.time << "(expected: 16:03:08)\n"
         << "  height: " << hdr.height << " (expected: 480)\n"
