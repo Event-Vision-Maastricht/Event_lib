@@ -23,15 +23,12 @@ namespace event_lib {
         void finish();
 
         //default 60 fps, ts in ms, polarity color changes are on
-        void timew_histogram(const EventPacket& packet){return timew_histogram(packet, 16, true);};
-        void timew_histogram(const EventPacket& packet, int time_window){return timew_histogram(packet, static_cast<long>(time_window), true);};
-        void timew_histogram(const EventPacket& packet, long time_window){return timew_histogram(packet, time_window, true);};
-        void timew_histogram(const EventPacket& packet, long time_window, bool colorOn);
+        void timew_histogram(const EventPacket& packet){return timew_histogram(packet, 16);};
+        void timew_histogram(const EventPacket& packet, long time_window);
 
         //default 10k events, oılarity color changes on
         void eventc_histogram(const EventPacket& packet){return eventc_histogram(packet, 10000);};
-        void eventc_histogram(const EventPacket& packet, int event_count){return eventc_histogram(packet, event_count, true);};
-        void eventc_histogram(const EventPacket& packet, int event_count, bool colorOn);
+        void eventc_histogram(const EventPacket& packet, int event_count);
 
         
         void make_bi(const EventPacket& packet);

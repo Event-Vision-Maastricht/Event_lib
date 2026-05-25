@@ -4,7 +4,7 @@
 #include <vector>
 #include "event.hpp"
 
-namespace event_lib {//TODO: some method or operator to check the differences between two packets
+namespace event_lib {
     /**
      * @class EventPacket
      * @brief Container for managing a collection of events
@@ -15,6 +15,7 @@ namespace event_lib {//TODO: some method or operator to check the differences be
      */
     class EventPacket {
     public:
+
         //add an event to the package
         void add_event(const Event& e);
 
@@ -39,8 +40,12 @@ namespace event_lib {//TODO: some method or operator to check the differences be
         //check if packet empty
         bool is_empty() const;
 
+        // Equality operator p1==p2 if each event is the same in the same order.
+        bool operator==(const EventPacket& other) const {
+            return events == other.events;
+        }
 
-    private://TODO: Search alternatives of vector for efficiency and time
+    private:
         std::vector<Event> events; //event container
         int current = 0;
     };

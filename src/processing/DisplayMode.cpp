@@ -22,7 +22,7 @@ namespace event_lib {
         return stop_requested_;
     }
 
-    void DisplayMode::timew_histogram(const EventPacket& packet, long time_window, bool colorOn){
+    void DisplayMode::timew_histogram(const EventPacket& packet, long time_window){
         if (!initialized || !stop_requested_ || stop_requested_->load() || !frame_) return;
 
         const auto& events = packet.get_events();
@@ -52,7 +52,7 @@ namespace event_lib {
     }
 
     
-    void DisplayMode::eventc_histogram(const EventPacket& packet, int event_count, bool colorOn){
+    void DisplayMode::eventc_histogram(const EventPacket& packet, int event_count){
         if (!initialized || !stop_requested_ || stop_requested_->load() || !frame_) return;
 
         const auto& events = packet.get_events();

@@ -11,7 +11,6 @@ namespace event_lib {
         return events;
     }
 
-    //TODO: error handling, maybe a fail message
     bool EventPacket::remove_event(size_t idx) {
         if (idx >= events.size()) {
             return false;

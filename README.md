@@ -12,8 +12,7 @@ Overleaf link: https://www.overleaf.com/read/hhtprzkmqqfg#3263d1
 - linux support
 - optimization
 - camera parser/stream
-- frame color settings
-
+- time window histogram creation/visualization issue, complicated way to not skip any events (since its time one package one frame update is not trustable)
 
 
 
