@@ -61,6 +61,11 @@ add_executable(test_datH tests/test_datH.cpp)
 target_link_libraries(test_datH PRIVATE event_lib)
 target_include_directories(test_datH PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+    # test_raw
+add_executable(test_raw tests/test_raw.cpp)
+target_link_libraries(test_raw PRIVATE event_lib)
+target_include_directories(test_raw PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
     #test_visualize
 add_executable(test_visualize tests/test_visualize.cpp)
 target_link_libraries(test_visualize PRIVATE event_lib)
@@ -71,6 +76,7 @@ add_test(NAME EventTests COMMAND test_event)
 add_test(NAME BuildIncludeRunTests COMMAND test_build_include_run)
 add_test(NAME EventPacketTests COMMAND test_event_packet)
 add_test(NAME DatHTests COMMAND test_datH)
+add_test(NAME RawTests COMMAND test_raw)
 add_test(NAME VisualizingTests COMMAND test_visualize)
 
 

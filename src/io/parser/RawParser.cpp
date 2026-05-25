@@ -10,7 +10,6 @@
 #include <string>
 
 namespace {
-
 /**
  * @brief get the exact value after the "keyword"
  */
@@ -57,15 +56,35 @@ namespace event_lib {
     RawParser::~RawParser(){close();}
 
     void RawParser::open(const std::string& path){
-        return;
+        validate_raw_path(path);
+        close();
+
+        path_ = path;
+        file_.open(path_,std::ios::binary);
+        if(!file_.is_open()) throw std::runtime_error("Failed to open .raw file: " + path_);
+
+        file_.seekg(0, std::ios::end);
+        const std::streamoff file_size = file_.tellg();
+        length_ = file_size > static_cast<std::streamoff>(std::numeric_limits<int>::max())
+            ? std::numeric_limits<int>::max()
+            : static_cast<int>(file_size);
+        file_.seekg(0, std::ios::beg);
+
+        header_ = read_header();
+        eof_reached_ = false;
     }
 
     bool RawParser::has_more() const{
-        return false;
+        return file_.is_open() && !eof_reached_;
     }
 
     EventPacket RawParser::read_packet(std::size_t max_events){
+        if (!file_.is_open()) throw std::runtime_error("RawParser::read_packet called before open().");
+        if (max_events == 0) throw std::runtime_error("max_events must be greater than zero.");
+
         EventPacket packet;
+        //TODO: event parsing according to layout and event type.
+
         return packet;
     }
 
@@ -94,58 +113,67 @@ namespace event_lib {
             }
 
             const std::string payload = line.substr(1);
-            std::size_t sp = payload.find(' ');
-            std::string key, val;
-            if (sp != std::string::npos) {
-                key = payload.substr(0, sp);
-                val = payload.substr(sp + 1);
-                if (!val.empty() && val.back() == '.') val.pop_back();
-            } else {
-                key = payload;
-                val.clear();
-            }
-
-            if (key == "Date") {
-                const std::size_t time_separator = val.find(' ');
-                header.time = time_separator == std::string::npos ? std::string{} : val.substr(time_separator + 1);
-                header.date = val.substr(0, time_separator);
-                header.extra.emplace(key, val);
+            
+            std::string d = value_after_keyword(payload, "Date");
+            // % Date 2020-09-14 09:03:25
+            if (!d.empty()) {
+                const std::size_t time_separator = d.find(' ');
+                header.time = time_separator == std::string::npos
+                    ? std::string{}
+                    : d.substr(time_separator + 1);
+                    header.date = d.substr(0, time_separator);
                 continue;
             }
 
-            if (key == "Width") {
-                header.width = check_int(val);
-                header.extra.emplace(key, val);
+            std::string firmware = value_after_keyword(payload, "firmware_version");
+            //% firmware_version 2.0.2
+            if (!firmware.empty()) {
+                header.extra.emplace("firmware_version", firmware);
                 continue;
             }
 
-            if (key == "Height") {
-                header.height = check_int(val);
-                header.extra.emplace(key, val);
+            std::string integrator = value_after_keyword(payload, "integrator_name");
+            // % integrator_name Prophesee
+            if (!integrator.empty()) {
+                header.extra.emplace("integrator_name", integrator);
+                continue;
+            }
+            
+            std::string serialnum = value_after_keyword(payload, "serial_number");
+            // % serial_number 30384338
+            if (!serialnum.empty()) {
+                header.extra.emplace("serial_number", serialnum);
                 continue;
             }
 
-            if (key == "evt") {
-                header.version = val;
-                header.extra.emplace(key, val);
+            std::string sysid = value_after_keyword(payload, "system_ID");
+            // % system_ID 21
+            if (!sysid.empty()) {
+                header.extra.emplace("system_id", sysid);
                 continue;
             }
 
-            if(key == "plugin_name"){
-                std::array<int,2> r = find_geometry(val);
+            std::string evt = value_after_keyword(payload, "evt");
+            // % evt 2.0
+            if (!evt.empty()) {
+                header.extra.emplace("evt", evt);
+                continue;
+            }
+
+            std::string camera = value_after_keyword(payload, "plugin_name");
+            // % plugin_name hal_plugin_gen3_fx3
+            if (!camera.empty()) {
+                header.extra.emplace("plugin_name", camera);
+                std::array<int,2> r = find_geometry(camera);
                 header.width = r[0];
                 header.height = r[1];
                 continue;
-                
             }
-
-            header.extra.emplace(key, val);
         }
 
         return header;
     }
 
-    /////////////source: chatgpt !!!!!!! non trustable !!!!!!
     // | Sensor            | Resolution |
     // | ----------------- | ---------- |
     // | Gen3              | 640×480    |
