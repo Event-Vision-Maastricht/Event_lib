@@ -44,7 +44,7 @@ bool test_header_reading(){
         << "  height: " << hdr.height << " (expected: 480)\n"
         << "  width: " << hdr.width << " (expected: 640)" << std::endl;
     // Check if header matches expected values
-    if(hdr.event_type != "CD" || hdr.version != "2" ||hdr.date!="2020-09-14" || hdr.time!="16:03:08" ||hdr.height != 480 || hdr.width != 640){
+    if(event_type != "CD" || version != "2" ||hdr.date!="2020-09-14" || hdr.time!="16:03:08" ||hdr.height != 480 || hdr.width != 640){
         std::cout << "Header mismatch:\n";
         return false;
     }
