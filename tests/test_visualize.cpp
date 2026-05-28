@@ -5,8 +5,10 @@
 #include "event_lib/core/sensor_metadata.hpp"
 
 #include <cstdlib>
+#include <condition_variable>
 #include <chrono>
 #include <iostream>
+#include <mutex>
 #include <string>
 #include <thread>
 
@@ -29,14 +31,14 @@ bool test_read_show_event_count_visualization() {
     //const std::string dat_path = "C:/Users/user/Desktop/okul/thesi/data/events_big_time_gap_repeated_ts.dat";
     //const std::string dat_path = "C:/Users/user/Desktop/okul/thesi/data/Prophesee_Dataset_n_cars/n-cars_test/cars/obj_000121_td.dat";
     
-    constexpr std::size_t packet_size = 10000;
+    constexpr std::size_t packet_size = 15000;
 
     DatasetEventStream stream(dat_path);
     DisplayMode display_mode;
     Window window;
 
     if (!display_mode.init_metadata(stream.metadata())) return false;
-    window.init_window(display_mode.get_frame(), false, "TestWindow", display_mode.get_stop_flag());
+    window.init_window(display_mode.get_frame(), true, "TestWindow", display_mode.get_stop_flag());
     const auto stop_flag = display_mode.get_stop_flag();
 ///TODO: right now histograms do not stop/return when frame is updated and ready. so when window can visualize it, the whole packet is already processed.
 // thets why right now the max event or max time does not work for anything. possible slutions:
@@ -48,7 +50,7 @@ bool test_read_show_event_count_visualization() {
             if (packet.is_empty()) break;
 
 //            display_mode.eventc_histogram(packet, static_cast<int>(packet.size()));
-            display_mode.eventc_histogram(packet,5000);
+            display_mode.eventc_histogram(packet,10000);
             //display_mode.timew_histogram(packet, 120);
             window.show_frame();
         }
@@ -71,7 +73,92 @@ bool test_read_show_event_count_visualization() {
 
 }
 
+bool test_read_show_event_count_visualization_threaded() {
+    const std::string dat_path = "C:/Users/user/Desktop/okul/thesi/data/spinner.dat";
+    constexpr std::size_t packet_size = 10000;
+
+    DatasetEventStream stream(dat_path);
+    DisplayMode display_mode;
+    Window window;
+
+    if (!display_mode.init_metadata(stream.metadata())) return false;
+
+    const auto frame = display_mode.get_frame();
+    const auto stop_flag = display_mode.get_stop_flag();
+    if (!frame || !stop_flag) return false;
+
+    window.init_window(frame, false, "TestWindowThreaded", stop_flag);
+
+    std::mutex frame_mutex;
+    std::condition_variable frame_ready_cv;
+    bool producer_done = false;
+    bool success = true;
+    std::exception_ptr producer_error;
+
+    std::thread producer([&]() {
+        try {
+            while (stream.has_next() && !stop_flag->load()) {
+                EventPacket packet = stream.next_packet(packet_size);
+                if (packet.is_empty()) break;
+                {
+                    std::lock_guard<std::mutex> lock(frame_mutex);
+                    display_mode.eventc_histogram(packet, 10000);
+                }
+
+                frame_ready_cv.notify_one();
+            }
+        } catch (...) {
+            success = false;
+            producer_error = std::current_exception();
+            stop_flag->store(true);
+        }
+
+        {
+            std::lock_guard<std::mutex> lock(frame_mutex);
+            producer_done = true;
+        }
+        frame_ready_cv.notify_one();
+    });
+
+    std::unique_lock<std::mutex> lock(frame_mutex);
+    while (!stop_flag->load()) {
+        frame_ready_cv.wait(lock, [&]() {
+            return stop_flag->load() || producer_done || frame->is_dirty();
+        });
+
+        if (stop_flag->load()) break;
+
+        if (!frame->is_dirty()) {
+            if (producer_done) {
+                break;
+            }
+            continue;
+        }
+        window.show_frame();
+    }
+    lock.unlock();
+    producer.join();
+    frame_ready_cv.notify_all();
+
+    window.finish();
+
+    if (producer_error) {
+        try {
+            std::rethrow_exception(producer_error);
+        } catch (const std::exception& e) {
+            std::cerr << "ERROR in stream demo thread: " << e.what() << std::endl;
+        }
+        return false;
+    }
+
+    display_mode.finish();
+    stream.close();
+
+    return success;
+}
+
 int main() {
     run_test("visualize_stream_event_count_histogram", test_read_show_event_count_visualization());
+    //run_test("visualize_stream_event_count_histogram threaded.", test_read_show_event_count_visualization_threaded());
     return 0;
 }

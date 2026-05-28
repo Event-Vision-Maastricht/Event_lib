@@ -78,11 +78,24 @@ namespace event_lib {
         return file_.is_open() && !eof_reached_;
     }
 
+    // Event data written in binary little or big-endian (depending on the sensor configuration, little-endian by default
     EventPacket RawParser::read_packet(std::size_t max_events){
         if (!file_.is_open()) throw std::runtime_error("RawParser::read_packet called before open().");
         if (max_events == 0) throw std::runtime_error("max_events must be greater than zero.");
 
+        std::string val = header_.get_extra_or("evt");
+        if ( val != "2.0"){
+            std::cerr << "DEBUG: The event type is not 2.0, therefore not supported: " << val << std::endl;
+            //throw std::runtime_error("Only CD type of events, not " + t);
+        }
+        //each event in 2.0 format:
+        //https://docs.prophesee.ai/stable/data/encoding_formats/evt2.html#chapter-data-encoding-formats-evt2
+                //32 bit data, 4 MSB are to define word type. could be CD_OFF, CD_ON, EVT_TIME_HIGH, EXT_TRIGGER, OTHERS, CONTINUED
+        //timestamp in microsecond, 34 bits, rollout at 2^34microsec
+        std::array<unsigned char, 8> raw_event{};
+
         EventPacket packet;
+        Event e = decode_event()
         //TODO: event parsing according to layout and event type.
 
         return packet;
@@ -96,6 +109,22 @@ namespace event_lib {
      * % serial_number 30384338
      * % system_ID 21
      * % evt 2.0
+     * 
+     * prophesee  header example: //TODO
+     * 
+     * % camera_integrator_name Prophesee
+     * % date 2023-03-29 16:37:46
+     * % evt 3.0
+     * % format EVT3;height=720;width=1280
+     * % generation 4.2
+     * % geometry 1280x720
+     * % integrator_name Prophesee
+     * % plugin_integrator_name Prophesee
+     * % plugin_name hal_plugin_imx636_evk4
+     * % sensor_generation 4.2
+     * % serial_number 00ca0009
+     * % system_ID 49
+     * % end
      */
     RawFileHeader RawParser::read_header() {
         RawFileHeader header;
@@ -106,7 +135,7 @@ namespace event_lib {
             const std::streampos line_start_pos = file_.tellg();
             if (!std::getline(file_, line)) break;
 
-            if (line.empty() || line[0] != '%') {
+            if (line.empty() || line[0] != '%' || line.find("end")) {
                 file_.clear();
                 file_.seekg(line_start_pos, std::ios::beg);
                 return header;
@@ -254,5 +283,3 @@ namespace event_lib {
     }
 
 }
-
-
