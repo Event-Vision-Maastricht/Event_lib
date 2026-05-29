@@ -7,7 +7,6 @@ Overleaf link: https://www.overleaf.com/read/hhtprzkmqqfg#3263d1
 - Opencv (cppEnv)
 
 ## TODO:
-- raw file parser
 - aedat file parser
 - linux support
 - optimization
@@ -17,7 +16,7 @@ Overleaf link: https://www.overleaf.com/read/hhtprzkmqqfg#3263d1
 
 
 #### initial supported files
-- raw  (TODO)
+- raw  (done)
 - dat  (done)
 - aedat (TODO)
 

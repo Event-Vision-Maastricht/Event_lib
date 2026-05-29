@@ -13,6 +13,9 @@ namespace {
     constexpr uint32_t EVT_TIME_HIGH = 0x8;
     constexpr uint32_t CD_OFF        = 0x0;
     constexpr uint32_t CD_ON         = 0x1;
+    constexpr uint32_t EXT_TRIGGER = 0xA;
+    constexpr uint32_t OTHERS = 0xE;
+    constexpr uint32_t CONTINUED = 0xF;
 
 /**
  * @brief get the exact value after the "keyword"
@@ -56,6 +59,7 @@ int check_int(const std::string& s) {
 }
 } // namespace
 
+//TODO: evt 2.1 format support
 namespace event_lib {
     RawParser::~RawParser(){close();}
 
@@ -134,8 +138,16 @@ namespace event_lib {
                 out_event.polarity = (type == CD_ON);
                 return true;
             }
+            case EXT_TRIGGER: {
+                return false;
+            }
+            case OTHERS: {
+                return false;
+            }
+            case CONTINUED: { //continued extends whatever was before
+                return false;
+            }
             default:
-                // For now ignoring EXT_TRIGGER, OTHERS, CONTINUED
                 return false;
         }
     }

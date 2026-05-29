@@ -33,6 +33,7 @@ bool run_test(const std::string& name, bool result) {
 bool test_header_reading(){
     try {
         parser.open("C:/Users/user/Desktop/okul/thesi/data/spinner.raw");
+        
     } catch (const std::exception& e) {
         std::cerr << "Could not open raw file: " << e.what() << std::endl;
         return false;
