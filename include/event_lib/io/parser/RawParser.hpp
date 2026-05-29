@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <fstream>
@@ -30,13 +31,14 @@ public:
 private:
     static void validate_raw_path(const std::string& path);
     RawFileHeader read_header();
-    Event decode_event(const unsigned char* bytes) const;
+    bool decode_event(const unsigned char* bytes, Event& out_event);
 
     int length_ =0;
     std::string path_;
     std::ifstream file_;
     RawFileHeader header_;
     bool eof_reached_ = true;
+    uint32_t current_time_high_ = 0;
 
 };
 

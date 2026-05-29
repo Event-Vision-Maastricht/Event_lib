@@ -10,6 +10,10 @@
 #include <string>
 
 namespace {
+    constexpr uint32_t EVT_TIME_HIGH = 0x8;
+    constexpr uint32_t CD_OFF        = 0x0;
+    constexpr uint32_t CD_ON         = 0x1;
+
 /**
  * @brief get the exact value after the "keyword"
  */
@@ -85,20 +89,55 @@ namespace event_lib {
 
         std::string val = header_.get_extra_or("evt");
         if ( val != "2.0"){
-            std::cerr << "DEBUG: The event type is not 2.0, therefore not supported: " << val << std::endl;
-            //throw std::runtime_error("Only CD type of events, not " + t);
+            throw std::runtime_error("Only EVT2.0 is currently supported, not " + val);
         }
-        //each event in 2.0 format:
-        //https://docs.prophesee.ai/stable/data/encoding_formats/evt2.html#chapter-data-encoding-formats-evt2
-                //32 bit data, 4 MSB are to define word type. could be CD_OFF, CD_ON, EVT_TIME_HIGH, EXT_TRIGGER, OTHERS, CONTINUED
+        //each event in 2.0 format:   https://docs.prophesee.ai/stable/data/encoding_formats/evt2.html#chapter-data-encoding-formats-evt2
         //timestamp in microsecond, 34 bits, rollout at 2^34microsec
-        std::array<unsigned char, 8> raw_event{};
+        std::array<unsigned char, 4> raw_word{};
 
         EventPacket packet;
-        Event e = decode_event()
-        //TODO: event parsing according to layout and event type.
-
+        Event e;
+        while(packet.size()< max_events){
+            file_.read(reinterpret_cast<char*>(raw_word.data()), 4);
+            if(file_.gcount() != 4){
+                eof_reached_ = true;
+                break;
+            }
+            if(decode_event(raw_word.data(),e)) packet.add_event(e);
+        }
         return packet;
+    }
+
+        bool RawParser::decode_event(const unsigned char* bytes, Event& out_event) {
+        uint32_t word = 0;
+        std::memcpy(&word, bytes, sizeof(uint32_t));
+
+        //IMPORTANT: assuming little-endian
+
+        const uint32_t type = (word >> 28) & 0xF;
+
+        // 4 MSB are to define word type. could be CD_OFF, CD_ON, EVT_TIME_HIGH, EXT_TRIGGER, OTHERS, CONTINUED
+        switch(type) {
+            case EVT_TIME_HIGH: {
+                current_time_high_ = word & 0x0FFFFFFF;
+                return false;
+            }
+            case CD_OFF:
+            case CD_ON: {
+                const uint32_t ts_low = (word >> 22) & 0x3F;
+                const uint32_t x = (word >> 11) & 0x7FF;
+                const uint32_t y = word & 0x7FF;
+                const uint64_t timestamp = (static_cast<uint64_t>(current_time_high_) << 6)| ts_low;
+                out_event.x = static_cast<int>(x);
+                out_event.y = static_cast<int>(y);
+                out_event.timestamp = timestamp;
+                out_event.polarity = (type == CD_ON);
+                return true;
+            }
+            default:
+                // For now ignoring EXT_TRIGGER, OTHERS, CONTINUED
+                return false;
+        }
     }
 
     /**
@@ -135,7 +174,7 @@ namespace event_lib {
             const std::streampos line_start_pos = file_.tellg();
             if (!std::getline(file_, line)) break;
 
-            if (line.empty() || line[0] != '%' || line.find("end")) {
+            if (line.empty() || line[0] != '%' || line == "% end") {
                 file_.clear();
                 file_.seekg(line_start_pos, std::ios::beg);
                 return header;
@@ -210,11 +249,6 @@ namespace event_lib {
     // | DAVIS346          | 346×260    |
     // | DVXplorer         | 640×480    |
     // | Prophesee GenX320 | 320×320    |
-    /**
-     * possible names to cameras:
-     * hal_plugin_gen3_fx3
-     * hal_plugin_gen41_evk3
-     */
     std::array<int, 2> RawParser::find_geometry(const std::string& cameraName){
         //default since this is the camera used by uni
         std::array<int,2> r = {1280,720};
@@ -223,7 +257,7 @@ namespace event_lib {
         // to lower
         std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return static_cast<char>(std::tolower(c)); });
 
-        if (s.find("gen3") != std::string::npos || s.find("prophesee") != std::string::npos && s.find("320") == std::string::npos) {
+        if ((s.find("gen3") != std::string::npos || s.find("prophesee") != std::string::npos) && s.find("320") == std::string::npos) {
             r = {640,480};
             return r;
         }
@@ -246,11 +280,6 @@ namespace event_lib {
         
 
         return r;
-    }
-
-    Event RawParser::decode_event(const unsigned char* bytes) const {
-        Event e;
-        return e;
     }
     
     bool RawParser::reset() {
