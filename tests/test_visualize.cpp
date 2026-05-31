@@ -81,18 +81,21 @@ bool test_read_show_event_count_visualization_threaded() {
     DisplayMode display_mode;
     Window window;
 
+    //initialize metadata for display mode
     if (!display_mode.init_metadata(stream.metadata())) return false;
 
+    //get frame pointer and stop flag
     const auto frame = display_mode.get_frame();
     const auto stop_flag = display_mode.get_stop_flag();
     if (!frame || !stop_flag) return false;
 
-    window.init_window(frame, false, "TestWindowThreaded", stop_flag);
+    //initialize window by frame pointer, color on, window name and stop flag pointer
+    window.init_window(frame, true, "TestWindowThreaded", stop_flag);
 
-    std::mutex frame_mutex;
+    std::mutex cv_mutex;
     std::condition_variable frame_ready_cv;
-    bool producer_done = false;
-    bool success = true;
+    std::atomic<bool> producer_done{false};
+    std::atomic<bool> success{true};
     std::exception_ptr producer_error;
 
     std::thread producer([&]() {
@@ -100,41 +103,37 @@ bool test_read_show_event_count_visualization_threaded() {
             while (stream.has_next() && !stop_flag->load()) {
                 EventPacket packet = stream.next_packet(packet_size);
                 if (packet.is_empty()) break;
-                {
-                    std::lock_guard<std::mutex> lock(frame_mutex);
                     display_mode.eventc_histogram(packet, 10000);
-                }
 
                 frame_ready_cv.notify_one();
             }
         } catch (...) {
-            success = false;
+            success.store(false);
             producer_error = std::current_exception();
             stop_flag->store(true);
         }
 
-        {
-            std::lock_guard<std::mutex> lock(frame_mutex);
-            producer_done = true;
-        }
+        producer_done.store(true);
         frame_ready_cv.notify_one();
     });
 
-    std::unique_lock<std::mutex> lock(frame_mutex);
+    std::unique_lock<std::mutex> lock(cv_mutex);
     while (!stop_flag->load()) {
         frame_ready_cv.wait(lock, [&]() {
-            return stop_flag->load() || producer_done || frame->is_dirty();
+            return stop_flag->load() || producer_done.load() || frame->is_dirty();
         });
 
         if (stop_flag->load()) break;
 
         if (!frame->is_dirty()) {
-            if (producer_done) {
+            if (producer_done.load()) {
                 break;
             }
             continue;
         }
+        lock.unlock();
         window.show_frame();
+        lock.lock();
     }
     lock.unlock();
     producer.join();
@@ -154,11 +153,11 @@ bool test_read_show_event_count_visualization_threaded() {
     display_mode.finish();
     stream.close();
 
-    return success;
+    return success.load();
 }
 
 int main() {
-    run_test("visualize_stream_event_count_histogram", test_read_show_event_count_visualization());
-    //run_test("visualize_stream_event_count_histogram threaded.", test_read_show_event_count_visualization_threaded());
+    //run_test("visualize_stream_event_count_histogram", test_read_show_event_count_visualization());
+    run_test("visualize_stream_event_count_histogram threaded.", test_read_show_event_count_visualization_threaded());
     return 0;
 }
