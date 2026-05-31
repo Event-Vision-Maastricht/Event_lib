@@ -1,7 +1,7 @@
 #pragma once
 
 #include <condition_variable>
-#include <deque>
+#include <chrono>
 #include <fstream>
 #include <cstring>
 #include <mutex>
@@ -32,6 +32,10 @@ namespace event_lib{
         void decay_frame(double amount);
 
         bool finalize_frame(long timestamp, FrameStr& output_frame);
+        bool publish_frame(long timestamp, double decay_amount = 0.85);
+        bool consume_published_frame(FrameStr& output_frame);
+        bool wait_for_published_frame(std::chrono::milliseconds timeout) const;
+        void close();
 
         // Get reference to current frame (before finalization)
         const FrameStr& get_current_frame() const { return current_frame_; }
@@ -51,12 +55,21 @@ namespace event_lib{
 
     private:
         void ensure_frame_storage(FrameStr& frame);
+        bool finalize_frame_unlocked(long timestamp, FrameStr& output_frame);
+        bool publish_frame_unlocked(long timestamp, FrameStr& output_frame);
+        void decay_frame_unlocked(double amount);
 
         const SensorMetadata* metadata_{nullptr};
         FrameStr current_frame_;
+        FrameStr published_frame_;
         int total_events_;
         int on_events_count_;
         int off_events_count_;
         bool is_dirty_ = false;
+        bool has_published_frame_ = false;
+        bool closed_ = false;
+        mutable std::mutex mutex_;
+        mutable std::condition_variable frame_ready_;
+        mutable std::condition_variable publish_slot_free_;
     };
 }

@@ -30,7 +30,7 @@ bool test_read_show_event_count_visualization() {
     //const std::string path = "C:/Users/user/Desktop/okul/thesi/data/hand_spinner.raw";
     const std::string path = "C:/Users/user/Desktop/okul/thesi/data/195_falling_particles.raw";
 
-    constexpr std::size_t packet_size = 30000;
+    constexpr std::size_t packet_size = 10000;
 
     DatasetEventStream stream(path);
     DisplayMode display_mode;
@@ -45,7 +45,6 @@ bool test_read_show_event_count_visualization() {
             EventPacket packet = stream.next_packet(packet_size);
             if (packet.is_empty()) break;
 
-//            display_mode.eventc_histogram(packet, static_cast<int>(packet.size()));
             display_mode.eventc_histogram(packet,10000);
             //display_mode.timew_histogram(packet, 120);
             window.show_frame();

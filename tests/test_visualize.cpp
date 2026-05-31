@@ -31,7 +31,7 @@ bool test_read_show_event_count_visualization() {
     //const std::string dat_path = "C:/Users/user/Desktop/okul/thesi/data/events_big_time_gap_repeated_ts.dat";
     //const std::string dat_path = "C:/Users/user/Desktop/okul/thesi/data/Prophesee_Dataset_n_cars/n-cars_test/cars/obj_000121_td.dat";
     
-    constexpr std::size_t packet_size = 15000;
+    constexpr std::size_t packet_size = 10000;
 
     DatasetEventStream stream(dat_path);
     DisplayMode display_mode;
@@ -75,7 +75,7 @@ bool test_read_show_event_count_visualization() {
 
 bool test_read_show_event_count_visualization_threaded() {
     const std::string dat_path = "C:/Users/user/Desktop/okul/thesi/data/spinner.dat";
-    constexpr std::size_t packet_size = 10000;
+    constexpr std::size_t packet_size = 30000;
 
     DatasetEventStream stream(dat_path);
     DisplayMode display_mode;
@@ -92,8 +92,6 @@ bool test_read_show_event_count_visualization_threaded() {
     //initialize window by frame pointer, color on, window name and stop flag pointer
     window.init_window(frame, true, "TestWindowThreaded", stop_flag);
 
-    std::mutex cv_mutex;
-    std::condition_variable frame_ready_cv;
     std::atomic<bool> producer_done{false};
     std::atomic<bool> success{true};
     std::exception_ptr producer_error;
@@ -103,9 +101,9 @@ bool test_read_show_event_count_visualization_threaded() {
             while (stream.has_next() && !stop_flag->load()) {
                 EventPacket packet = stream.next_packet(packet_size);
                 if (packet.is_empty()) break;
-                    display_mode.eventc_histogram(packet, 10000);
+                    //display_mode.eventc_histogram(packet, 30000);
+                    display_mode.timew_histogram(packet, 120000 );
 
-                frame_ready_cv.notify_one();
             }
         } catch (...) {
             success.store(false);
@@ -114,30 +112,21 @@ bool test_read_show_event_count_visualization_threaded() {
         }
 
         producer_done.store(true);
-        frame_ready_cv.notify_one();
     });
 
-    std::unique_lock<std::mutex> lock(cv_mutex);
     while (!stop_flag->load()) {
-        frame_ready_cv.wait(lock, [&]() {
-            return stop_flag->load() || producer_done.load() || frame->is_dirty();
-        });
-
         if (stop_flag->load()) break;
 
-        if (!frame->is_dirty()) {
-            if (producer_done.load()) {
-                break;
-            }
-            continue;
+        const bool frame_ready = frame->wait_for_published_frame(std::chrono::milliseconds(16));
+        if (frame_ready && frame->is_dirty()) {
+            window.show_frame();
+        } else if (producer_done.load()) {
+            break;
+        } else {
+            window.show_frame();
         }
-        lock.unlock();
-        window.show_frame();
-        lock.lock();
     }
-    lock.unlock();
     producer.join();
-    frame_ready_cv.notify_all();
 
     window.finish();
 

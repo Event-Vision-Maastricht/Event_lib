@@ -9,9 +9,8 @@ Overleaf link: https://www.overleaf.com/read/hhtprzkmqqfg#3263d1
 ## TODO:
 - aedat file parser
 - linux support
-- optimization
 - camera parser/stream
-- time window histogram creation/visualization issue, complicated way to not skip any events (since its time one package one frame update is not trustable)
+
 
 
 

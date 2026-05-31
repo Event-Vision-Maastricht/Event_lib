@@ -34,6 +34,9 @@ namespace event_lib{
             std::string window_name_ = "Event Lib";
             bool color_on_{true};
             cv::Mat image_;
+            FrameStr display_frame_;
+            bool has_display_frame_{false};
+            bool has_shown_image_{false};
             std::shared_ptr<Frame> frame_;
             std::shared_ptr<std::atomic<bool>> stopFlag_;
     };

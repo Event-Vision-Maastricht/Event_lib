@@ -30,50 +30,50 @@ namespace event_lib {
 
         long window_start = events[0].timestamp;
         long window_end = window_start + time_window;
+        long last_timestamp = events[0].timestamp;
 
         //going through all events
         for (const auto& ev : events) {
             if (stop_requested_->load()) return;
-            long ev_time = ev.timestamp;
+            const long ev_time = ev.timestamp;
+            last_timestamp = ev_time;
             frame_->add_event(ev);
             // if ev_time exceeded, time for next frame
             if (ev_time >= window_end) {
                 // Move to next window
                 window_start = ev_time;
-                //window turns it to false once its shown
-                //TODO:if its already true, wait until false(thread version tho)
-                frame_->set_dirty(true);
+                if (!frame_->publish_frame(ev_time)) return;
                 window_end = window_start + time_window;
             }
         }
         if (frame_->get_total_events() > 0) {
-            frame_->set_dirty(true);
+            frame_->publish_frame(last_timestamp);
         }
     }
 
     
     void DisplayMode::eventc_histogram(const EventPacket& packet, int event_count){
-        if (!initialized || !stop_requested_ || stop_requested_->load() || !frame_) return;
+        if (!initialized || !stop_requested_ || stop_requested_->load() || !frame_ || event_count <= 0) return;
 
         const auto& events = packet.get_events();
         if (events.empty()) return;
 
         int event_counter = 0;
-        long frame_ts = events[0].timestamp;
+        long last_timestamp = events[0].timestamp;
 
         for (const auto& ev : events) {
             if (stop_requested_->load()) return;
+            last_timestamp = ev.timestamp;
             frame_->add_event(ev);
             event_counter++;
             // check if we should start new frame
             if (event_counter >= event_count) {
-                frame_->set_dirty(true);
-                frame_ts = ev.timestamp; //new timestamp of the next frame
+                if (!frame_->publish_frame(ev.timestamp)) return;
                 event_counter = 0; // ready for updating frame
             }
         }
         if (event_counter > 0) {
-            frame_->set_dirty(true);
+            frame_->publish_frame(last_timestamp);
         }
     }
 
@@ -89,6 +89,9 @@ namespace event_lib {
     void DisplayMode::finish(){
         if (stop_requested_) {
             stop_requested_->store(true);
+        }
+        if (frame_) {
+            frame_->close();
         }
         frame_.reset();
     }
