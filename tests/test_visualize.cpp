@@ -54,6 +54,9 @@ bool test_read_show_event_count_visualization() {
             //display_mode.timew_histogram(packet, 120);
             window.show_frame();
         }
+        if (display_mode.flush_pending_frame()) {
+            window.show_frame();
+        }
         if (stop_flag) {
             stop_flag->store(true);
         }
@@ -102,9 +105,10 @@ bool test_read_show_event_count_visualization_threaded() {
                 EventPacket packet = stream.next_packet(packet_size);
                 if (packet.is_empty()) break;
                     //display_mode.eventc_histogram(packet, 30000);
-                    display_mode.timew_histogram(packet, 120000 );
+                    display_mode.timew_histogram(packet, 1200);
 
             }
+            display_mode.flush_pending_frame();
         } catch (...) {
             success.store(false);
             producer_error = std::current_exception();

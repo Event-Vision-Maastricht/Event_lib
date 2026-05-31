@@ -10,6 +10,12 @@ namespace event_lib {
         metadata_ = &metadata;
         frame_ = std::make_shared<Frame>(*metadata_);
         stop_requested_ = std::make_shared<std::atomic<bool>>(false);
+        event_counter_ = 0;
+        last_event_timestamp_ = 0;
+        time_window_start_ = 0;
+        time_window_end_ = 0;
+        has_time_window_ = false;
+        has_pending_events_ = false;
         initialized = true;
         return true;
     }
@@ -22,32 +28,44 @@ namespace event_lib {
         return stop_requested_;
     }
 
+    bool DisplayMode::flush_pending_frame(){
+        if (!initialized || !stop_requested_ || stop_requested_->load() || !frame_ || !has_pending_events_) return false;
+
+        const bool published = frame_->publish_frame(last_event_timestamp_);
+        if (published) {
+            event_counter_ = 0;
+            has_pending_events_ = false;
+        }
+        return published;
+    }
+
     void DisplayMode::timew_histogram(const EventPacket& packet, long time_window){
         if (!initialized || !stop_requested_ || stop_requested_->load() || !frame_) return;
 
         const auto& events = packet.get_events();
         if (events.empty()) return;
 
-        long window_start = events[0].timestamp;
-        long window_end = window_start + time_window;
-        long last_timestamp = events[0].timestamp;
+        if (!has_time_window_) {
+            time_window_start_ = events[0].timestamp;
+            time_window_end_ = time_window_start_ + time_window;
+            has_time_window_ = true;
+        }
 
         //going through all events
         for (const auto& ev : events) {
             if (stop_requested_->load()) return;
             const long ev_time = ev.timestamp;
-            last_timestamp = ev_time;
+            last_event_timestamp_ = ev_time;
+            has_pending_events_ = true;
             frame_->add_event(ev);
             // if ev_time exceeded, time for next frame
-            if (ev_time >= window_end) {
+            if (ev_time >= time_window_end_) {
                 // Move to next window
-                window_start = ev_time;
+                time_window_start_ = ev_time;
                 if (!frame_->publish_frame(ev_time)) return;
-                window_end = window_start + time_window;
+                has_pending_events_ = false;
+                time_window_end_ = time_window_start_ + time_window;
             }
-        }
-        if (frame_->get_total_events() > 0) {
-            frame_->publish_frame(last_timestamp);
         }
     }
 
@@ -58,22 +76,18 @@ namespace event_lib {
         const auto& events = packet.get_events();
         if (events.empty()) return;
 
-        int event_counter = 0;
-        long last_timestamp = events[0].timestamp;
-
         for (const auto& ev : events) {
             if (stop_requested_->load()) return;
-            last_timestamp = ev.timestamp;
+            last_event_timestamp_ = ev.timestamp;
+            has_pending_events_ = true;
             frame_->add_event(ev);
-            event_counter++;
+            event_counter_++;
             // check if we should start new frame
-            if (event_counter >= event_count) {
+            if (event_counter_ >= event_count) {
                 if (!frame_->publish_frame(ev.timestamp)) return;
-                event_counter = 0; // ready for updating frame
+                event_counter_ = 0; // ready for updating frame
+                has_pending_events_ = false;
             }
-        }
-        if (event_counter > 0) {
-            frame_->publish_frame(last_timestamp);
         }
     }
 

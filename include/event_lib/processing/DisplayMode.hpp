@@ -20,6 +20,7 @@ namespace event_lib {
         bool init_metadata(const SensorMetadata& metadata);
         std::shared_ptr<Frame> get_frame() const;
         std::shared_ptr<std::atomic<bool>> get_stop_flag() const;
+        bool flush_pending_frame();
         void finish();
 
         //default 60 fps, ts in ms, polarity color changes are on
@@ -38,6 +39,12 @@ namespace event_lib {
         const SensorMetadata* metadata_{nullptr};
         std::shared_ptr<Frame> frame_;
         std::shared_ptr<std::atomic<bool>> stop_requested_;
+        int event_counter_{0};
+        long last_event_timestamp_{0};
+        long time_window_start_{0};
+        long time_window_end_{0};
+        bool has_time_window_{false};
+        bool has_pending_events_{false};
 
     };
 }

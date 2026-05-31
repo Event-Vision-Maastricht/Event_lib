@@ -25,50 +25,72 @@ bool run_test(const std::string& name, bool result) {
     return result;
 }
 
-bool test_read_show_event_count_visualization() {
+
+bool test_read_show_event_count_visualization_threaded() {
     //const std::string path = "C:/Users/user/Desktop/okul/thesi/data/spinner.raw";
     //const std::string path = "C:/Users/user/Desktop/okul/thesi/data/hand_spinner.raw";
     const std::string path = "C:/Users/user/Desktop/okul/thesi/data/195_falling_particles.raw";
-
-    constexpr std::size_t packet_size = 10000;
+    constexpr std::size_t packet_size = 30000;
 
     DatasetEventStream stream(path);
     DisplayMode display_mode;
     Window window;
 
     if (!display_mode.init_metadata(stream.metadata())) return false;
-    window.init_window(display_mode.get_frame(), true, "TestWindow", display_mode.get_stop_flag());
+    const auto frame = display_mode.get_frame();
     const auto stop_flag = display_mode.get_stop_flag();
+    if (!frame || !stop_flag) return false;
+    window.init_window(frame, true, "TestWindowThreaded", stop_flag);
 
-    try{
-        while (stream.has_next() && stop_flag && !stop_flag->load()) {
-            EventPacket packet = stream.next_packet(packet_size);
-            if (packet.is_empty()) break;
+    std::atomic<bool> producer_done{false};
+    std::atomic<bool> success{true};
+    std::exception_ptr producer_error;
 
-            display_mode.eventc_histogram(packet,10000);
-            //display_mode.timew_histogram(packet, 120);
+    std::thread producer([&]() {
+        try {
+            while (stream.has_next() && !stop_flag->load()) {
+                EventPacket packet = stream.next_packet(packet_size);
+                if (packet.is_empty()) break;
+                    //display_mode.eventc_histogram(packet, 30000);
+                    display_mode.timew_histogram(packet, 120);
+            }
+            display_mode.flush_pending_frame();
+        } catch (...) {
+            success.store(false);
+            producer_error = std::current_exception();
+            stop_flag->store(true);
+        }
+        producer_done.store(true);
+    });
+
+    while (!stop_flag->load()) {
+        if (stop_flag->load()) break;
+        const bool frame_ready = frame->wait_for_published_frame(std::chrono::milliseconds(16));
+        if (frame_ready && frame->is_dirty()) {
+            window.show_frame();
+        } else if (producer_done.load()) {
+            break;
+        } else {
             window.show_frame();
         }
-        if (stop_flag) {
-            stop_flag->store(true);
-        }
+    }
+    producer.join();
+    window.finish();
 
-        //window.finish();
-        display_mode.finish();
-        stream.close();
-    }catch(const std::exception& e){
-        std::cerr << "ERROR in stream demo: " << e.what() << std::endl;
-        if (stop_flag) {
-            stop_flag->store(true);
+    if (producer_error) {
+        try {
+            std::rethrow_exception(producer_error);
+        } catch (const std::exception& e) {
+            std::cerr << "ERROR in stream demo thread: " << e.what() << std::endl;
         }
         return false;
     }
-
-    return true;
-
+    display_mode.finish();
+    stream.close();
+    return success.load();
 }
 
 int main() {
-    run_test("visualize_stream_event_count_histogram", test_read_show_event_count_visualization());
+    run_test("visualize_stream_event_count_histogram", test_read_show_event_count_visualization_threaded());
     return 0;
 }
