@@ -196,8 +196,8 @@ namespace event_lib {
                 std::size_t space_pos = t.find(' ');
                 if (space_pos != std::string::npos) t = t.substr(0, space_pos);
                 if(t != "CD") {
-                    std::cerr << "DEBUG: The event type is not CD, therefore not supported: " << t << std::endl;
-                    //throw std::runtime_error("Only CD type of events, not " + t);
+                    //std::cerr << "DEBUG: The event type is not CD, therefore not supported: " << t << std::endl;
+                    throw std::runtime_error("Only CD type of events, not " + t);
                 }
                 header.extra.emplace("data file containing",t);
                 continue;

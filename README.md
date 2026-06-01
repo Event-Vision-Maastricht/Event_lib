@@ -14,9 +14,9 @@ Overleaf link: https://www.overleaf.com/read/hhtprzkmqqfg#3263d1
 
 
 
-#### initial supported files
-- raw  (done)
-- dat  (done)
+#### supported data file formats:
+- raw EVT2.0
+- dat CD events
 - aedat (TODO)
 
 

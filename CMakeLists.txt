@@ -13,6 +13,7 @@ set(EVENT_LIB_SOURCES
     src/core/event.cpp
     src/core/event_packet.cpp
     src/io/parser/EventParserFactory.cpp
+    src/io/parser/AedatParser.cpp
     src/io/parser/DatParser.cpp
     src/io/parser/RawParser.cpp
     src/io/stream/DatasetEventStream.cpp
@@ -66,6 +67,11 @@ add_executable(test_raw tests/test_raw.cpp)
 target_link_libraries(test_raw PRIVATE event_lib)
 target_include_directories(test_raw PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+    #test_aedat
+add_executable(test_aedat tests/test_aedat.cpp)
+target_link_libraries(test_aedat PRIVATE event_lib)
+target_include_directories(test_aedat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
     #test_visualize
 add_executable(test_visualize tests/test_visualize.cpp)
 target_link_libraries(test_visualize PRIVATE event_lib)
@@ -82,6 +88,7 @@ add_test(NAME BuildIncludeRunTests COMMAND test_build_include_run)
 add_test(NAME EventPacketTests COMMAND test_event_packet)
 add_test(NAME DatHTests COMMAND test_datH)
 add_test(NAME RawTests COMMAND test_raw)
+add_test(NAME AedatTests COMMAND test_aedat)
 add_test(NAME VisualizingTestsDat COMMAND test_visualize)
 add_test(NAME VisualizingTestsRaw COMMAND test_visualize_raw)
 

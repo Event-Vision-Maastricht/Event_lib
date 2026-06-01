@@ -29,7 +29,9 @@ bool run_test(const std::string& name, bool result) {
 bool test_read_show_event_count_visualization_threaded() {
     //const std::string path = "C:/Users/user/Desktop/okul/thesi/data/spinner.raw";
     //const std::string path = "C:/Users/user/Desktop/okul/thesi/data/hand_spinner.raw";
-    const std::string path = "C:/Users/user/Desktop/okul/thesi/data/195_falling_particles.raw";
+    //const std::string path = "C:/Users/user/Desktop/okul/thesi/data/195_falling_particles.raw";
+    const std::string path = "C:/Users/user/Desktop/okul/thesi/data/monitoring_40_50hz.raw";
+
     constexpr std::size_t packet_size = 30000;
 
     DatasetEventStream stream(path);
@@ -51,8 +53,8 @@ bool test_read_show_event_count_visualization_threaded() {
             while (stream.has_next() && !stop_flag->load()) {
                 EventPacket packet = stream.next_packet(packet_size);
                 if (packet.is_empty()) break;
-                    //display_mode.eventc_histogram(packet, 30000);
-                    display_mode.timew_histogram(packet, 120);
+                    //display_mode.eventc_histogram(packet, 60000);
+                    display_mode.timew_histogram(packet, 1000);
             }
             display_mode.flush_pending_frame();
         } catch (...) {

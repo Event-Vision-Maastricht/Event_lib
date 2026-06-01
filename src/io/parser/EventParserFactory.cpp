@@ -1,4 +1,5 @@
 #include "event_lib/io/parser/EventParserFactory.hpp"
+#include "event_lib/io/parser/AedatParser.hpp"
 #include "event_lib/io/parser/DatParser.hpp"
 #include "event_lib/io/parser/RawParser.hpp"
 #include <filesystem>
@@ -12,8 +13,7 @@ namespace event_lib {
 
         if (ext == ".dat") return std::make_unique<DatParser>();
         if (ext == ".raw") return std::make_unique<RawParser>();
-        if (ext == ".hdf5" || ext == ".h5") throw std::runtime_error("Hdf5 parser not implemented yet: " + path);
-        //return std::make_unique<HdfParser>();
+        if (ext == ".aedat") return std::make_unique<AedatParser>();
         
         throw std::runtime_error("Unsupported file extension: " + path);
     }
