@@ -78,7 +78,7 @@ bool test_read_event(int amount){
 
 int main() {
     run_test("header testing", test_header_reading());
-    //run_test("read events", test_read_event(100));
+    run_test("read events", test_read_event(100));
 
     return 0;
 }

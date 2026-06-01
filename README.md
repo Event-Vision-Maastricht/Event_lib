@@ -15,9 +15,9 @@ Overleaf link: https://www.overleaf.com/read/hhtprzkmqqfg#3263d1
 
 
 #### supported data file formats:
-- raw EVT2.0
-- dat CD events
-- aedat (TODO)
+- raw version EVT2.0
+- dat CD event type
+- aedat AEDAT2.0 DVS type
 
 
 #### build and testing for windows

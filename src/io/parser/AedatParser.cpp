@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cstdint>
 #include <cctype>
-#include <cstring>
 #include <filesystem>
 #include <limits>
 #include <sstream>
@@ -103,6 +102,19 @@ void parse_creation_date(const std::string& value, event_lib::AedatFileHeader& h
     // header.extra.emplace("creation_date_raw", value);
     // header.extra.emplace("creation_timezone", timezone);
 }
+
+/////////////////event parsing helpers////////////////////////////
+std::uint32_t read_be32(const unsigned char* bytes) {
+    return (static_cast<std::uint32_t>(bytes[0]) << 24) |
+           (static_cast<std::uint32_t>(bytes[1]) << 16) |
+           (static_cast<std::uint32_t>(bytes[2]) << 8) |
+           static_cast<std::uint32_t>(bytes[3]);
+}
+
+bool is_davis_aechip(const std::string& aechip) {
+    return to_lower_copy(aechip).find("davis") != std::string::npos;
+}
+
 } // namespace
 
 
@@ -111,7 +123,7 @@ void parse_creation_date(const std::string& value, event_lib::AedatFileHeader& h
  * Header lines always case sensitive.
  * very first header line  information about version of AEDAT format.
  *   If it is not present, version 1.0 is assumed.
- * All header fields/integers are little-endian.
+ * All integer data and fields are big-endian.
  * 
  * 2.0:
  * address field 32 bit
@@ -144,15 +156,6 @@ namespace event_lib {
 
     bool AedatParser::has_more() const {
         return file_.is_open() && !eof_reached_;
-    }
-
-    EventPacket AedatParser::read_packet(std::size_t max_events) {
-        if (!file_.is_open()) throw std::runtime_error("AedatParser::read_packet called before open().");
-        if (max_events == 0)  throw std::runtime_error("max_events must be greater than zero.");
-
-        EventPacket packet;
-        // TODO
-        return packet;
     }
 
     bool AedatParser::reset() {
@@ -198,6 +201,7 @@ namespace event_lib {
             const std::string version = trim_copy(line.substr(prefix.size()));
             if (version != "2.0") throw std::runtime_error("Only AEDAT 2.0 supported, not " + version);
             header.version = version;
+            saw_supported_version = true;
         }else throw std::runtime_error("Only AEDAT 2.0 supported, not 1.0"); // if non existent its 1.0 and not accepted too
 
         while (true) {
@@ -245,9 +249,54 @@ namespace event_lib {
         return header;
     }
 
-    Event AedatParser::decode_event(const unsigned char* bytes) const {
-        (void)bytes;
-        return Event{};
+    EventPacket AedatParser::read_packet(std::size_t max_events) {
+        if (!file_.is_open()) throw std::runtime_error("AedatParser::read_packet called before open().");
+        if (max_events == 0)  throw std::runtime_error("max_events must be greater than zero.");
+        const std::string aechip = header_.get_extra_or("aechip");
+        if (!is_davis_aechip(aechip)) throw std::runtime_error("AEDAT 2.0 event decoding is currently implemented only for DAVIS AEChip data.");
+
+        EventPacket packet;
+        Event e;
+        // 8 bytes per event, half ts half coordinates
+        std::array<unsigned char, 8> raw_word{};
+        while(packet.size()< max_events){
+            file_.read(reinterpret_cast<char*>(raw_word.data()), 8);
+            if(file_.gcount() != 8){
+                eof_reached_ = true;
+                break;
+            }
+            if (decode_event(raw_word.data(), e)) {
+                packet.add_event(e);
+            }
+        }
+        return packet;
+    }
+
+    bool AedatParser::decode_event(const unsigned char* bytes, Event& out_event) const {
+        const std::uint32_t address = read_be32(bytes);
+        const std::uint32_t timestamp = read_be32(bytes + 4);
+
+        // DAVIS AEDAT2.0 bit 31 == 0 is DVS, bit 31 == 1 is APS or IMU
+        const std::uint32_t type = (address >> 31) & 0x1u;
+        if (type != 0) return false;
+
+        const std::uint32_t subtype = (address >> 10) & 0x3u;
+        if (subtype != 0 && subtype != 2) return false;
+
+        const std::uint32_t y = (address >> 22) & 0x1FFu;
+        const std::uint32_t x = (address >> 12) & 0x3FFu;
+
+        if (header_.is_valid() &&
+            (x >= static_cast<std::uint32_t>(header_.width) ||
+             y >= static_cast<std::uint32_t>(header_.height))) {
+            return false;
+        }
+
+        out_event.timestamp = static_cast<long>(timestamp);
+        out_event.x = static_cast<int>(x);
+        out_event.y = static_cast<int>(y);
+        out_event.polarity = subtype == 2;
+        return true;
     }
 
 }
