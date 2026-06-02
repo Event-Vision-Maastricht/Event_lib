@@ -1,6 +1,7 @@
 #include "event_lib/processing/Window.hpp"
 
 #if EVENT_LIB_WITH_OPENCV
+#include <new>
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
@@ -20,6 +21,26 @@ namespace event_lib{
 #else
             return std::getenv("DISPLAY") != nullptr || std::getenv("WAYLAND_DISPLAY") != nullptr;
 #endif
+        }
+
+        bool is_window_visible(const std::string& window_name) {
+            if (window_name.empty()) return false;
+            try {
+                return cv::getWindowProperty(window_name, cv::WND_PROP_VISIBLE) >= 1;
+            } catch (const cv::Exception&) {
+                return false;
+            }
+        }
+
+        void destroy_window_if_registered(const std::string& window_name) {
+            if (window_name.empty()) return;
+            try {
+                if (is_window_visible(window_name)) {
+                    cv::destroyWindow(window_name);
+                }
+            } catch (const cv::Exception&) {
+                // Some Linux HighGUI backends throw if a user already closed the window.
+            }
         }
     }
 
@@ -49,7 +70,7 @@ namespace event_lib{
     void Window::show_frame() {
         if (!frame_ || (stopFlag_ && stopFlag_->load())) return;
 
-        if (has_shown_image_ && cv::getWindowProperty(window_name_, cv::WND_PROP_VISIBLE) < 1) {
+        if (has_shown_image_ && !is_window_visible(window_name_)) {
             finish();
             return;
         }
@@ -110,7 +131,7 @@ namespace event_lib{
     void Window::finish() {
         if (stopFlag_) stopFlag_->store(true);
         if (frame_) frame_->close();
-        if (!window_name_.empty()) cv::destroyWindow(window_name_);
+        destroy_window_if_registered(window_name_);
 
         image_.release();
         display_frame_ = FrameStr{};

@@ -7,6 +7,7 @@
 #endif
 
 #if EVENT_LIB_WITH_OPENCV
+#include <new>
 #include <opencv2/core.hpp>
 #endif
 
