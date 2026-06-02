@@ -27,12 +27,13 @@ bool run_test(const std::string& name, bool result) {
 
 
 bool test_read_show_event_count_visualization_threaded() {
-    //const std::string path = "C:/Users/user/Desktop/okul/thesi/data/Davis346blue-2020-02-10T10-57-27+1100-0 ping pong DVS only.aedat";
-    //const std::string path = "C:/Users/user/Desktop/okul/thesi/data/Davis346blue-2018-12-30T04-44-31-0800-00000001-0- tobi juggling pasadena shorter.aedat";
-    //const std::string path = "C:/Users/user/Desktop/okul/thesi/data/Davis346blue-2018-12-07T13-56-01+0100-00000001-0 disk high BW pr.aedat";
-    //const std::string path = "C:/Users/user/Desktop/okul/thesi/data/Davis346mini-2017-11-02T12-05-19+0100-00000001_card_throwing.aedat";
-    const std::string path = "C:/Users/user/Desktop/okul/thesi/data/Davis346mini-2017-11-02T15-33-03+0100-00000001-0 nccr girls.aedat";
+    //const std::string path = "C:/Users/user/Desktop/okul/thesi/data/ping pong DVS only.aedat";
+    //const std::string path = "C:/Users/user/Desktop/okul/thesi/data/tobi juggling pasadena shorter.aedat";
+    //const std::string path = "C:/Users/user/Desktop/okul/thesi/data/disk high BW pr.aedat";
+    //const std::string path = "C:/Users/user/Desktop/okul/thesi/data/card_throwing.aedat";
+    const std::string path = "C:/Users/user/Desktop/okul/thesi/data/nccr girls.aedat";
     //const std::string path = "C:/Users/user/Desktop/okul/thesi/data/a.aedat";
+    //const std::string path = "C:/Users/user/Desktop/okul/thesi/data/e.aedat";
 
     constexpr std::size_t packet_size = 30000;
 
