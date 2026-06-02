@@ -11,11 +11,9 @@ Overleaf link: https://www.overleaf.com/read/hhtprzkmqqfg#3263d1
 - OpenCV, only needed when `EVENT_LIB_WITH_OPENCV=ON`
 
 ## TODO:
-- aedat file parser
-- linux support
 - camera parser/stream
 
-#### supported data file formats:
+#### Supported data file formats:
 - raw version EVT2.0
 - dat CD event type
 - aedat AEDAT2.0 DVS type
@@ -26,6 +24,7 @@ Overleaf link: https://www.overleaf.com/read/hhtprzkmqqfg#3263d1
 - `EVENT_LIB_WITH_OPENCV=ON`: builds OpenCV window visualization support. This is ON by default.
 - `EVENT_LIB_BUILD_VISUAL_TESTS=ON`: builds the OpenCV window/manual visualization tests. This is OFF by default.
 - `BUILD_TESTING=ON`: builds the normal test executables. This is usually ON by default when using CTest.
+- `EVENT_LIB_VISUAL_HOLD=0`: environment variable used by CTest so visual tests exit automatically. When unset, direct visual-test runs keep the window open until `q` or `Esc`.
 
 
 ## Build on Windows
@@ -66,7 +65,9 @@ cmake --build build --config Debug
 Run all registered tests:
 
 ```powershell
-ctest --test-dir build -C Debug --output-on-failure
+cd build
+ctest -C Debug --output-on-failure
+cd ..
 ```
 
 Run a specific executable:
@@ -80,6 +81,8 @@ cd build\Debug
 ```
 
 Visual tests are manual/window-based and are only built when `EVENT_LIB_BUILD_VISUAL_TESTS=ON`.
+When run directly, visual tests keep the window open after playback. Press `q` or `Esc` to close it.
+CTest disables this hold automatically so automated test runs can finish.
 
 
 ## Build on Linux
