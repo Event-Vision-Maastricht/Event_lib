@@ -73,6 +73,13 @@ int check_int(const std::string& s) {
         return 0;
     }
 }
+
+std::uint32_t read_le32(const unsigned char* bytes) {
+    return static_cast<std::uint32_t>(bytes[0]) |
+           (static_cast<std::uint32_t>(bytes[1]) << 8) |
+           (static_cast<std::uint32_t>(bytes[2]) << 16) |
+           (static_cast<std::uint32_t>(bytes[3]) << 24);
+}
 } // namespace
 
 namespace event_lib {
@@ -249,15 +256,11 @@ namespace event_lib {
     Event DatParser::decode_event(const unsigned char* bytes) const {
         Event event;
         // 4 bytes: packed (polarity:4 | y:14 | x:14)
-        std::uint32_t packed = 0;
+        const std::uint32_t packed = read_le32(bytes);
         // Other 4 bytes: 32-bit signed timestamp (file stores int32)
-        std::uint32_t ts32 = 0;
+        const std::uint32_t ts32 = read_le32(bytes + 4);
 
-        std::memcpy(&packed, bytes, 4);
-        std::memcpy(&ts32, bytes + 4, 4);
-
-        // Assign timestamp into event (widen to long)
-        event.timestamp = static_cast<long>(ts32);
+        event.timestamp = static_cast<EventTimestamp>(ts32);
         
         // Unpack bits (assume polarity in the top 4 bits)
         const std::uint32_t polarity_bits = (packed >> 28) & 0xFu; // 4 bits

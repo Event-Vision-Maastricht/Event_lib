@@ -1,4 +1,9 @@
+#ifdef _WIN32
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
+#endif
+
 #include "event_lib/processing/DisplayMode.hpp"
 #include <algorithm>
 #include <iostream>
@@ -39,7 +44,7 @@ namespace event_lib {
         return published;
     }
 
-    void DisplayMode::timew_histogram(const EventPacket& packet, long time_window){
+    void DisplayMode::timew_histogram(const EventPacket& packet, EventTimestamp time_window){
         if (!initialized || !stop_requested_ || stop_requested_->load() || !frame_) return;
 
         const auto& events = packet.get_events();
@@ -54,7 +59,7 @@ namespace event_lib {
         //going through all events
         for (const auto& ev : events) {
             if (stop_requested_->load()) return;
-            const long ev_time = ev.timestamp;
+            const EventTimestamp ev_time = ev.timestamp;
             last_event_timestamp_ = ev_time;
             has_pending_events_ = true;
             frame_->add_event(ev);

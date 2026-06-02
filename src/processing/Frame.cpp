@@ -69,12 +69,12 @@ namespace event_lib {
         }
     }
 
-    bool Frame::finalize_frame(long timestamp, FrameStr& output_frame) {
+    bool Frame::finalize_frame(EventTimestamp timestamp, FrameStr& output_frame) {
         std::lock_guard<std::mutex> lock(mutex_);
         return finalize_frame_unlocked(timestamp, output_frame);
     }
 
-    bool Frame::publish_frame(long timestamp, double decay_amount) {
+    bool Frame::publish_frame(EventTimestamp timestamp, double decay_amount) {
         std::unique_lock<std::mutex> lock(mutex_);
         publish_slot_free_.wait(lock, [this]() {
             return closed_ || !has_published_frame_;
@@ -93,7 +93,7 @@ namespace event_lib {
         return true;
     }
 
-    bool Frame::publish_frame_unlocked(long timestamp, FrameStr& output_frame) {
+    bool Frame::publish_frame_unlocked(EventTimestamp timestamp, FrameStr& output_frame) {
         if (metadata_ == nullptr || total_events_ == 0) {
             return false;
         }
@@ -156,7 +156,7 @@ namespace event_lib {
         publish_slot_free_.notify_all();
     }
 
-    bool Frame::finalize_frame_unlocked(long timestamp, FrameStr& output_frame) {
+    bool Frame::finalize_frame_unlocked(EventTimestamp timestamp, FrameStr& output_frame) {
         if (metadata_ == nullptr || total_events_ == 0) {
             return false;
         }
@@ -232,7 +232,7 @@ namespace event_lib {
         }
     }
 
-    long Frame::get_last_update() const {
+    EventTimestamp Frame::get_last_update() const {
         std::lock_guard<std::mutex> lock(mutex_);
         return current_frame_.timestamp;
     }

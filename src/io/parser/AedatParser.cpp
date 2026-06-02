@@ -292,9 +292,11 @@ namespace event_lib {
             return false;
         }
 
-        out_event.timestamp = static_cast<long>(timestamp);
+        out_event.timestamp = static_cast<EventTimestamp>(timestamp);
         out_event.x = static_cast<int>(x);
-        out_event.y = static_cast<int>(y);
+        out_event.y = header_.is_valid()
+            ? header_.height - 1 - static_cast<int>(y)
+            : static_cast<int>(y);
         out_event.polarity = subtype == 2;
         return true;
     }

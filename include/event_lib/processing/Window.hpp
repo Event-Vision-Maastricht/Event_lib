@@ -1,7 +1,15 @@
 #pragma once
 
 #include "event_lib/processing/Frame.hpp"
+
+#ifndef EVENT_LIB_WITH_OPENCV
+#define EVENT_LIB_WITH_OPENCV 1
+#endif
+
+#if EVENT_LIB_WITH_OPENCV
 #include <opencv2/core.hpp>
+#endif
+
 #include <atomic>
 #include <chrono>
 #include <memory>
@@ -33,7 +41,9 @@ namespace event_lib{
             double idle_decay_amount_{0.85};
             std::string window_name_ = "Event Lib";
             bool color_on_{true};
+#if EVENT_LIB_WITH_OPENCV
             cv::Mat image_;
+#endif
             FrameStr display_frame_;
             bool has_display_frame_{false};
             bool has_shown_image_{false};

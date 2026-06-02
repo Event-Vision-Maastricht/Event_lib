@@ -17,7 +17,7 @@ namespace event_lib{
     struct FrameStr {
         std::vector<std::vector<int>> on_events;   // Polarity ON (true)
         std::vector<std::vector<int>> off_events;  // Polarity OFF (false)
-        long timestamp;
+        EventTimestamp timestamp;
     };
 
     // Efficient frame generator for event batching
@@ -31,8 +31,8 @@ namespace event_lib{
         
         void decay_frame(double amount);
 
-        bool finalize_frame(long timestamp, FrameStr& output_frame);
-        bool publish_frame(long timestamp, double decay_amount = 0.85);
+        bool finalize_frame(EventTimestamp timestamp, FrameStr& output_frame);
+        bool publish_frame(EventTimestamp timestamp, double decay_amount = 0.85);
         bool consume_published_frame(FrameStr& output_frame);
         bool wait_for_published_frame(std::chrono::milliseconds timeout) const;
         void close();
@@ -50,13 +50,13 @@ namespace event_lib{
         bool is_dirty() const;
         bool consume_dirty();
         void set_dirty(bool newDirty);
-        long get_last_update() const;
+        EventTimestamp get_last_update() const;
         const SensorMetadata& get_metadata() const;
 
     private:
         void ensure_frame_storage(FrameStr& frame);
-        bool finalize_frame_unlocked(long timestamp, FrameStr& output_frame);
-        bool publish_frame_unlocked(long timestamp, FrameStr& output_frame);
+        bool finalize_frame_unlocked(EventTimestamp timestamp, FrameStr& output_frame);
+        bool publish_frame_unlocked(EventTimestamp timestamp, FrameStr& output_frame);
         void decay_frame_unlocked(double amount);
 
         const SensorMetadata* metadata_{nullptr};

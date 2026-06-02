@@ -3,6 +3,7 @@
 
 #include "event.hpp"
 #include "event_packet.hpp"
+#include <cstddef>
 #include <cstdint>
 
 namespace event_lib {

@@ -1,13 +1,28 @@
 #include "event_lib/processing/Window.hpp"
+
+#if EVENT_LIB_WITH_OPENCV
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
-#include <opencv2/videoio.hpp>
-#include <opencv2/imgcodecs.hpp>
+#endif
+
 #include <algorithm>
+#include <cstdlib>
+#include <stdexcept>
 #include <utility>
 
 namespace event_lib{
+#if EVENT_LIB_WITH_OPENCV
+    namespace {
+        bool has_display_server() {
+#if defined(_WIN32) || defined(__APPLE__)
+            return true;
+#else
+            return std::getenv("DISPLAY") != nullptr || std::getenv("WAYLAND_DISPLAY") != nullptr;
+#endif
+        }
+    }
+
     void Window::init_window(std::shared_ptr<Frame> frame, bool colorOn, const std::string& windowName, std::shared_ptr<std::atomic<bool>> stopFlag) {
         if (!frame || frame_ ) return;
         frame_ = std::move(frame);
@@ -15,6 +30,13 @@ namespace event_lib{
         window_name_ = windowName;
         stopFlag_ = std::move(stopFlag);
         const auto& metadata = frame_->get_metadata();
+
+        if (!has_display_server()) {
+            if (stopFlag_) stopFlag_->store(true);
+            frame_.reset();
+            throw std::runtime_error("Window requires a Linux display server. Set DISPLAY or WAYLAND_DISPLAY, or build with EVENT_LIB_WITH_OPENCV=OFF for headless use.");
+        }
+
         cv::namedWindow(window_name_, cv::WINDOW_NORMAL);
         image_ = cv::Mat(metadata.height, metadata.width, color_on_ ? CV_8UC3 : CV_8UC1);
         image_.setTo(cv::Scalar::all(0));
@@ -97,4 +119,28 @@ namespace event_lib{
         frame_.reset();
         stopFlag_.reset();
     }
+#else
+    void Window::init_window(std::shared_ptr<Frame> frame, bool colorOn, const std::string& windowName, std::shared_ptr<std::atomic<bool>> stopFlag) {
+        frame_ = std::move(frame);
+        color_on_ = colorOn;
+        window_name_ = windowName;
+        stopFlag_ = std::move(stopFlag);
+        if (stopFlag_) stopFlag_->store(true);
+        throw std::runtime_error("Window support is disabled. Reconfigure with EVENT_LIB_WITH_OPENCV=ON to use event_lib::Window.");
+    }
+
+    void Window::show_frame() {
+        if (stopFlag_) stopFlag_->store(true);
+    }
+
+    void Window::finish() {
+        if (stopFlag_) stopFlag_->store(true);
+        if (frame_) frame_->close();
+        display_frame_ = FrameStr{};
+        has_display_frame_ = false;
+        has_shown_image_ = false;
+        frame_.reset();
+        stopFlag_.reset();
+    }
+#endif
 }

@@ -57,6 +57,13 @@ int check_int(const std::string& s) {
         return 0;
     }
 }
+
+uint32_t read_le32(const unsigned char* bytes) {
+    return static_cast<uint32_t>(bytes[0]) |
+           (static_cast<uint32_t>(bytes[1]) << 8) |
+           (static_cast<uint32_t>(bytes[2]) << 16) |
+           (static_cast<uint32_t>(bytes[3]) << 24);
+}
 } // namespace
 
 //TODO: evt 2.1 format support
@@ -113,10 +120,7 @@ namespace event_lib {
     }
 
         bool RawParser::decode_event(const unsigned char* bytes, Event& out_event) {
-        uint32_t word = 0;
-        std::memcpy(&word, bytes, sizeof(uint32_t));
-
-        //IMPORTANT: assuming little-endian
+        const uint32_t word = read_le32(bytes);
 
         const uint32_t type = (word >> 28) & 0xF;
 
@@ -134,7 +138,7 @@ namespace event_lib {
                 const uint64_t timestamp = (static_cast<uint64_t>(current_time_high_) << 6)| ts_low;
                 out_event.x = static_cast<int>(x);
                 out_event.y = static_cast<int>(y);
-                out_event.timestamp = timestamp;
+                out_event.timestamp = static_cast<EventTimestamp>(timestamp);
                 out_event.polarity = (type == CD_ON);
                 return true;
             }

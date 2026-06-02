@@ -25,7 +25,7 @@ namespace event_lib {
 
         //default 60 fps, ts in ms, polarity color changes are on
         void timew_histogram(const EventPacket& packet){return timew_histogram(packet, 16);};
-        void timew_histogram(const EventPacket& packet, long time_window);
+        void timew_histogram(const EventPacket& packet, EventTimestamp time_window);
 
         //default 10k events, oılarity color changes on
         void eventc_histogram(const EventPacket& packet){return eventc_histogram(packet, 10000);};
@@ -40,11 +40,10 @@ namespace event_lib {
         std::shared_ptr<Frame> frame_;
         std::shared_ptr<std::atomic<bool>> stop_requested_;
         int event_counter_{0};
-        long last_event_timestamp_{0};
-        long time_window_start_{0};
-        long time_window_end_{0};
+        EventTimestamp last_event_timestamp_{0};
+        EventTimestamp time_window_start_{0};
+        EventTimestamp time_window_end_{0};
         bool has_time_window_{false};
         bool has_pending_events_{false};
-
     };
 }

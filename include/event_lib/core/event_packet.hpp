@@ -29,10 +29,10 @@ namespace event_lib {
         size_t size() const;
 
         //return number of events in a time window
-        size_t count_in_range(long w_start, long w_end) const;
+        size_t count_in_range(EventTimestamp w_start, EventTimestamp w_end) const;
 
         //return events in a time window
-        std::vector<Event> get_events_in_range(long w_start, long w_end) const;
+        std::vector<Event> get_events_in_range(EventTimestamp w_start, EventTimestamp w_end) const;
 
         //clean up events
         void clear();
