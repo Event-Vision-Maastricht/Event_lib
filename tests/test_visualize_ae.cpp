@@ -14,6 +14,10 @@
 
 using namespace event_lib;
 
+bool should_hold_visual_window() {
+    const char* value = std::getenv("EVENT_LIB_VISUAL_HOLD");
+    return value == nullptr || std::string(value) != "0";
+}
 
 bool run_test(const std::string& name, bool result) {
     if (result) {
@@ -75,7 +79,8 @@ bool test_read_show_event_count_visualization_threaded() {
         if (frame_ready && frame->is_dirty()) {
             window.show_frame();
         } else if (producer_done.load()) {
-            break;
+            if (!should_hold_visual_window()) break;
+            window.show_frame();
         } else {
             window.show_frame();
         }

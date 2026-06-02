@@ -140,7 +140,9 @@ if (BUILD_TESTING)
             VisualizingTestsDat
             VisualizingTestsRaw
             VisualizingTestsAedat
-            PROPERTIES SKIP_RETURN_CODE 77
+            PROPERTIES
+                SKIP_RETURN_CODE 77
+                ENVIRONMENT EVENT_LIB_VISUAL_HOLD=0
         )
     endif()
 endif()

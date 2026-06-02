@@ -140,6 +140,9 @@ Run a visual test:
 ./build/test_visualize_ae
 ```
 
+When run directly, visual tests keep the window open after playback. Press `q` or `Esc` to close it.
+CTest disables this hold automatically so automated test runs can finish.
+
 
 ## Install and consume with CMake
 
