@@ -35,7 +35,7 @@ bool run_test(const std::string& name, bool result) {
      */
 bool test_header_reading(){
     try {
-        parser.open("C:/Users/user/Desktop/okul/thesi/data/Davis346blue-2020-02-10T10-57-27+1100-0 ping pong DVS only.aedat");
+        parser.open("C:/Users/user/Desktop/okul/thesi/data/ping pong DVS only.aedat");
         
     } catch (const std::exception& e) {
         std::cerr << "Could not open raw file: " << e.what() << std::endl;

@@ -39,7 +39,7 @@ namespace event_lib{
                     cv::destroyWindow(window_name);
                 }
             } catch (const cv::Exception&) {
-                // Some Linux HighGUI backends throw if a user already closed the window.
+                // Some Linux HighGUI backends throw if a user already closed the window apparently.
             }
         }
     }
@@ -48,7 +48,7 @@ namespace event_lib{
         if (!frame || frame_ ) return;
         frame_ = std::move(frame);
         color_on_ = colorOn;
-        window_name_ = windowName;
+        window_name_ = windowName.empty() ? "Event_lib" : windowName;
         stopFlag_ = std::move(stopFlag);
         const auto& metadata = frame_->get_metadata();
 
@@ -59,6 +59,7 @@ namespace event_lib{
         }
 
         cv::namedWindow(window_name_, cv::WINDOW_NORMAL);
+        cv::setWindowTitle(window_name_, window_name_);
         image_ = cv::Mat(metadata.height, metadata.width, color_on_ ? CV_8UC3 : CV_8UC1);
         image_.setTo(cv::Scalar::all(0));
         display_frame_.on_events.assign(metadata.height, std::vector<int>(metadata.width, 0));
@@ -144,7 +145,7 @@ namespace event_lib{
     void Window::init_window(std::shared_ptr<Frame> frame, bool colorOn, const std::string& windowName, std::shared_ptr<std::atomic<bool>> stopFlag) {
         frame_ = std::move(frame);
         color_on_ = colorOn;
-        window_name_ = windowName;
+        window_name_ = windowName.empty() ? "Event_lib" : windowName;
         stopFlag_ = std::move(stopFlag);
         if (stopFlag_) stopFlag_->store(true);
         throw std::runtime_error("Window support is disabled. Reconfigure with EVENT_LIB_WITH_OPENCV=ON to use event_lib::Window.");

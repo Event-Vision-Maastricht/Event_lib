@@ -11,6 +11,7 @@ Overleaf link: https://www.overleaf.com/read/hhtprzkmqqfg#3263d1
 - OpenCV, only needed when `EVENT_LIB_WITH_OPENCV=ON`
 
 ## TODO:
+- testing and experiments
 - camera parser/stream
 
 #### Supported data file formats:

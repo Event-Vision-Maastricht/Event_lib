@@ -27,7 +27,7 @@ namespace event_lib{
             void init_window(
                 std::shared_ptr<Frame> frame,
                 bool colorOn,
-                const std::string& windowName = "Event Lib",
+                const std::string& windowName = "Event_lib",
                 std::shared_ptr<std::atomic<bool>> stopFlag = nullptr);
             // Shows the current frame and performs a small idle decay when no new frame was published.
             void show_frame();
@@ -40,7 +40,7 @@ namespace event_lib{
         private:
             std::chrono::steady_clock::time_point last_decay_;
             double idle_decay_amount_{0.85};
-            std::string window_name_ = "Event Lib";
+            std::string window_name_ = "Event_lib";
             bool color_on_{true};
 #if EVENT_LIB_WITH_OPENCV
             cv::Mat image_;

@@ -42,7 +42,7 @@ bool test_read_show_event_count_visualization() {
     Window window;
 
     if (!display_mode.init_metadata(stream.metadata())) return false;
-    window.init_window(display_mode.get_frame(), true, "TestWindow", display_mode.get_stop_flag());
+    window.init_window(display_mode.get_frame(), true, "Event_lib", display_mode.get_stop_flag());
     const auto stop_flag = display_mode.get_stop_flag();
 ///TODO: right now histograms do not stop/return when frame is updated and ready. so when window can visualize it, the whole packet is already processed.
 // thets why right now the max event or max time does not work for anything. possible slutions:
@@ -97,7 +97,7 @@ bool test_read_show_event_count_visualization_threaded() {
     if (!frame || !stop_flag) return false;
 
     //initialize window by frame pointer, color on, window name and stop flag pointer
-    window.init_window(frame, true, "TestWindowThreaded", stop_flag);
+    window.init_window(frame, true, "Event_lib", stop_flag);
 
     std::atomic<bool> producer_done{false};
     std::atomic<bool> success{true};

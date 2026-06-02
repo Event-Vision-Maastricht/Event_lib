@@ -46,7 +46,7 @@ bool test_read_show_event_count_visualization_threaded() {
     const auto frame = display_mode.get_frame();
     const auto stop_flag = display_mode.get_stop_flag();
     if (!frame || !stop_flag) return false;
-    window.init_window(frame, true, "TestWindowThreaded", stop_flag);
+    window.init_window(frame, true, "Event_lib", stop_flag);
 
     std::atomic<bool> producer_done{false};
     std::atomic<bool> success{true};
