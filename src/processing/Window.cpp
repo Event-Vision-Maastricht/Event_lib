@@ -3,8 +3,10 @@
 #if EVENT_LIB_WITH_OPENCV
 #include <new>
 #include <opencv2/core.hpp>
+#include <opencv2/core/core_c.h>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
+#include <opencv2/highgui/highgui_c.h>
 #endif
 
 #include <algorithm>
@@ -26,7 +28,7 @@ namespace event_lib{
         bool is_window_visible(const std::string& window_name) {
             if (window_name.empty()) return false;
             try {
-                return cv::getWindowProperty(window_name, cv::WND_PROP_VISIBLE) >= 1;
+                return cvGetWindowProperty(window_name.c_str(), cv::WND_PROP_VISIBLE) >= 1;
             } catch (const cv::Exception&) {
                 return false;
             }
@@ -36,7 +38,7 @@ namespace event_lib{
             if (window_name.empty()) return;
             try {
                 if (is_window_visible(window_name)) {
-                    cv::destroyWindow(window_name);
+                    cvDestroyWindow(window_name.c_str());
                 }
             } catch (const cv::Exception&) {
                 // Some Linux HighGUI backends throw if a user already closed the window apparently.
@@ -58,8 +60,7 @@ namespace event_lib{
             throw std::runtime_error("Window requires a Linux display server. Set DISPLAY or WAYLAND_DISPLAY, or build with EVENT_LIB_WITH_OPENCV=OFF for headless use.");
         }
 
-        cv::namedWindow(window_name_, cv::WINDOW_NORMAL);
-        cv::setWindowTitle(window_name_, window_name_);
+        cvNamedWindow(window_name_.c_str(), CV_WINDOW_NORMAL);
         image_ = cv::Mat(metadata.height, metadata.width, color_on_ ? CV_8UC3 : CV_8UC1);
         image_.setTo(cv::Scalar::all(0));
         display_frame_.on_events.assign(metadata.height, std::vector<int>(metadata.width, 0));
@@ -79,7 +80,7 @@ namespace event_lib{
         const auto& metadata = frame_->get_metadata();
         if (frame_->consume_published_frame(display_frame_)) has_display_frame_ = true;
         if (!has_display_frame_) {
-            cv::waitKey(1);
+            cvWaitKey(1);
             return;
         }
 
@@ -122,10 +123,10 @@ namespace event_lib{
             }
         }
 
-        cv::setWindowTitle(window_name_, window_name_ );
-        cv::imshow(window_name_, image_);
+        IplImage image_header = cvIplImage(image_);
+        cvShowImage(window_name_.c_str(), &image_header);
         has_shown_image_ = true;
-        const int key = cv::waitKey(1);
+        const int key = cvWaitKey(1);
         if (key == 27 || key == 'q' || key == 'Q') finish();
     }
 
