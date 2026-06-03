@@ -33,6 +33,7 @@ namespace event_lib{
 
         bool finalize_frame(EventTimestamp timestamp, FrameStr& output_frame);
         bool publish_frame(EventTimestamp timestamp, double decay_amount = 0.85);
+        bool publish_frame(const FrameStr& frame);
         bool consume_published_frame(FrameStr& output_frame);
         bool wait_for_published_frame(std::chrono::milliseconds timeout) const;
         void close();

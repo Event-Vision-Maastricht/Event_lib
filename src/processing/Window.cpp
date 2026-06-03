@@ -37,9 +37,7 @@ namespace event_lib{
         void destroy_window_if_registered(const std::string& window_name) {
             if (window_name.empty()) return;
             try {
-                if (is_window_visible(window_name)) {
-                    cvDestroyWindow(window_name.c_str());
-                }
+                if (is_window_visible(window_name)) cvDestroyWindow(window_name.c_str());
             } catch (const cv::Exception&) {
                 // Some Linux HighGUI backends throw if a user already closed the window apparently.
             }

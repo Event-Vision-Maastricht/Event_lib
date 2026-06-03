@@ -108,8 +108,8 @@ bool test_read_show_event_count_visualization_threaded() {
             while (stream.has_next() && !stop_flag->load()) {
                 EventPacket packet = stream.next_packet(packet_size);
                 if (packet.is_empty()) break;
-                    //display_mode.eventc_histogram(packet, 30000);
-                    display_mode.timew_histogram(packet, 1200);
+                    display_mode.eventc_histogram(packet, 30000);
+                    //display_mode.timew_histogram(packet, 1200);
 
             }
             display_mode.flush_pending_frame();

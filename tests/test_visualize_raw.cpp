@@ -58,7 +58,8 @@ bool test_read_show_event_count_visualization_threaded() {
                 EventPacket packet = stream.next_packet(packet_size);
                 if (packet.is_empty()) break;
                     //display_mode.eventc_histogram(packet, 60000);
-                    display_mode.timew_histogram(packet, 1000);
+                    //display_mode.timew_histogram(packet, 1000);
+                    display_mode.make_time_surface(packet);
             }
             display_mode.flush_pending_frame();
         } catch (...) {

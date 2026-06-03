@@ -6,6 +6,7 @@
 
 #include "event_lib/processing/DisplayMode.hpp"
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 
 ////////////////LAB2B HAS THE TIME WINDOW HISTOGRAM IMPLEMENTATION
@@ -21,6 +22,9 @@ namespace event_lib {
         time_window_end_ = 0;
         has_time_window_ = false;
         has_pending_events_ = false;
+        has_time_surface_ = false;
+        time_surface_on_.assign(metadata.height, std::vector<EventTimestamp>(metadata.width, 0));
+        time_surface_off_.assign(metadata.height, std::vector<EventTimestamp>(metadata.width, 0));
         initialized = true;
         return true;
     }
@@ -96,13 +100,56 @@ namespace event_lib {
         }
     }
 
-
-    void DisplayMode::make_bi(const EventPacket& packet){
-        // TODO: Implement binary frame generation
-    }
-
+    //assuming events are sorted in ascending timestamp
     void DisplayMode::make_time_surface(const EventPacket& packet){
-        // TODO: Implement time surface visualization
+        if (!initialized || !metadata_ || !stop_requested_ || stop_requested_->load() || !frame_) return;
+        const auto& events = packet.get_events();
+        if (events.empty()) return;
+        if (!has_time_surface_) {
+            time_surface_on_.assign(metadata_->height, std::vector<EventTimestamp>(metadata_->width, 0));
+            time_surface_off_.assign(metadata_->height, std::vector<EventTimestamp>(metadata_->width, 0));
+            has_time_surface_ = true;
+        }
+
+        constexpr int neighborhood_radius = 2;      // 5x5 local time surface patch.
+        constexpr double tau_ms = 30.0;             // Temporal decay constant for millisecond timestamps.
+        constexpr int max_intensity = 255;
+
+        FrameStr time_surface_frame;
+        time_surface_frame.on_events.assign(metadata_->height, std::vector<int>(metadata_->width, 0));
+        time_surface_frame.off_events.assign(metadata_->height, std::vector<int>(metadata_->width, 0));
+
+        for (const auto& ev : events) {
+            if (stop_requested_->load()) return;
+
+            auto& timestamp_map = ev.polarity ? time_surface_on_ : time_surface_off_;
+            auto& output_map = ev.polarity ? time_surface_frame.on_events : time_surface_frame.off_events;
+
+            timestamp_map[ev.y][ev.x] = ev.timestamp;
+            last_event_timestamp_ = ev.timestamp;
+            has_pending_events_ = true;
+
+            const int min_x = std::max(0, ev.x - neighborhood_radius);
+            const int max_x = std::min(metadata_->width - 1, ev.x + neighborhood_radius);
+            const int min_y = std::max(0, ev.y - neighborhood_radius);
+            const int max_y = std::min(metadata_->height - 1, ev.y + neighborhood_radius);
+
+            for (int y = min_y; y <= max_y; ++y) {
+                for (int x = min_x; x <= max_x; ++x) {
+                    const EventTimestamp neighbor_timestamp = timestamp_map[y][x];
+                    if (neighbor_timestamp <= 0 || neighbor_timestamp > ev.timestamp) continue;
+
+                    const double age_ms = static_cast<double>(ev.timestamp - neighbor_timestamp);
+                    const int intensity = static_cast<int>(std::round(max_intensity * std::exp(-age_ms / tau_ms)));
+                    output_map[y][x] = std::max(output_map[y][x], intensity);
+                }
+            }
+        }
+
+        time_surface_frame.timestamp = last_event_timestamp_;
+        if (has_pending_events_ && frame_->publish_frame(time_surface_frame)) {
+            has_pending_events_ = false;
+        }
     }
 
     void DisplayMode::finish(){

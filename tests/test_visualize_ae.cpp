@@ -63,6 +63,7 @@ bool test_read_show_event_count_visualization_threaded() {
                     //display_mode.eventc_histogram(packet, 5000);
                     //per one ms = 1000 16ms
                     display_mode.timew_histogram(packet, 16000);
+                    //display_mode.make_time_surface(packet);
             }
             display_mode.flush_pending_frame();
         } catch (...) {

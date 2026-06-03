@@ -12,9 +12,7 @@ namespace event_lib {
           total_events_(0),
           on_events_count_(0),
           off_events_count_(0) {
-        if (!metadata.is_valid()) {
-            throw std::runtime_error("Frame: SensorMetadata must have valid width and height > 0");
-        }
+        if (!metadata.is_valid()) throw std::runtime_error("Frame: SensorMetadata must have valid width and height > 0");
         ensure_frame_storage(current_frame_);
         ensure_frame_storage(published_frame_);
         current_frame_.timestamp = 0;
@@ -25,17 +23,13 @@ namespace event_lib {
 
     void Frame::add_event(const Event& ev) {
         std::lock_guard<std::mutex> lock(mutex_);
-        if (metadata_ == nullptr || closed_) {
-            return;
-        }
+        if (metadata_ == nullptr || closed_) return;
 
         const int x = ev.x;
         const int y = ev.y;
         const bool polarity = ev.polarity;
 
-        if (x < 0 || x >= metadata_->width || y < 0 || y >= metadata_->height) {
-            return;
-        }
+        if (x < 0 || x >= metadata_->width || y < 0 || y >= metadata_->height) return;
 
         if (polarity) {
             current_frame_.on_events[y][x]++;
@@ -53,9 +47,7 @@ namespace event_lib {
     }
 
     void Frame::decay_frame_unlocked(double amount) {
-        if (metadata_ == nullptr) {
-            return;
-        }
+        if (metadata_ == nullptr) return;
 
         for (int y = 0; y < metadata_->height; ++y) {
             for (int x = 0; x < metadata_->width; ++x) {
@@ -90,6 +82,32 @@ namespace event_lib {
         frame_ready_.notify_one();
 
         decay_frame(decay_amount);
+        return true;
+    }
+
+    bool Frame::publish_frame(const FrameStr& frame) {
+        std::unique_lock<std::mutex> lock(mutex_);
+        publish_slot_free_.wait(lock, [this]() {
+            return closed_ || !has_published_frame_;
+        });
+
+        if (closed_ || metadata_ == nullptr) return false;
+
+        ensure_frame_storage(published_frame_);
+        for (int y = 0; y < metadata_->height; ++y) {
+            std::copy(frame.on_events[y].begin(),
+                      frame.on_events[y].end(),
+                      published_frame_.on_events[y].begin());
+            std::copy(frame.off_events[y].begin(),
+                      frame.off_events[y].end(),
+                      published_frame_.off_events[y].begin());
+        }
+        published_frame_.timestamp = frame.timestamp;
+        has_published_frame_ = true;
+        is_dirty_ = true;
+        lock.unlock();
+        frame_ready_.notify_one();
+
         return true;
     }
 
@@ -157,9 +175,7 @@ namespace event_lib {
     }
 
     bool Frame::finalize_frame_unlocked(EventTimestamp timestamp, FrameStr& output_frame) {
-        if (metadata_ == nullptr || total_events_ == 0) {
-            return false;
-        }
+        if (metadata_ == nullptr || total_events_ == 0) return false;
 
         current_frame_.timestamp = timestamp;
         ensure_frame_storage(output_frame);
@@ -182,9 +198,7 @@ namespace event_lib {
 
     void Frame::reset_frame() {
         std::lock_guard<std::mutex> lock(mutex_);
-        if (metadata_ == nullptr) {
-            return;
-        }
+        if (metadata_ == nullptr) return;
 
         for (int y = 0; y < metadata_->height; ++y) {
             std::fill(current_frame_.on_events[y].begin(), current_frame_.on_events[y].end(), 0);

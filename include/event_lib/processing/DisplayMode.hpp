@@ -31,8 +31,14 @@ namespace event_lib {
         void eventc_histogram(const EventPacket& packet){return eventc_histogram(packet, 10000);};
         void eventc_histogram(const EventPacket& packet, int event_count);
 
-        
-        void make_bi(const EventPacket& packet);
+        /**
+         * method to make taken from:
+         * Speed Invariant Time Surface for Learning to Detect Corner Points with Event-Based Cameras
+         * Jacques Manderscheid1, Amos Sironi1, Nicolas Bourdis1, Davide Migliore1and Vincent Lepetit21Prophesee,
+         * Paris, France, 2University of Bordeaux, Bordeaux, France
+         * and:
+         * Efficient spatio-temporal feature clustering for large event-based datasets
+         */
         void make_time_surface(const EventPacket& packet);
 
     private:
@@ -45,5 +51,8 @@ namespace event_lib {
         EventTimestamp time_window_end_{0};
         bool has_time_window_{false};
         bool has_pending_events_{false};
+        bool has_time_surface_{false};
+        std::vector<std::vector<EventTimestamp>> time_surface_on_;
+        std::vector<std::vector<EventTimestamp>> time_surface_off_;
     };
 }
