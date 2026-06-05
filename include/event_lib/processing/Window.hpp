@@ -33,7 +33,7 @@ namespace event_lib{
             void show_frame();
             void finish();
 
-        //TODO: save video
+        //TODO: future recommendation: save video
         // void show_and_save(bool colorOn = true, std::string name);
         // void save(bool colorOn = true, std::string name);
 

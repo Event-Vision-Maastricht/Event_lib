@@ -39,7 +39,7 @@ namespace event_lib {
          * and:
          * Efficient spatio-temporal feature clustering for large event-based datasets
          */
-        void make_time_surface(const EventPacket& packet);
+        //void make_time_surface(const EventPacket& packet);
 
     private:
         const SensorMetadata* metadata_{nullptr};
@@ -51,8 +51,8 @@ namespace event_lib {
         EventTimestamp time_window_end_{0};
         bool has_time_window_{false};
         bool has_pending_events_{false};
-        bool has_time_surface_{false};
-        std::vector<std::vector<EventTimestamp>> time_surface_on_;
-        std::vector<std::vector<EventTimestamp>> time_surface_off_;
+        // bool has_time_surface_{false};
+        // std::vector<std::vector<EventTimestamp>> time_surface_on_;
+        // std::vector<std::vector<EventTimestamp>> time_surface_off_;
     };
 }

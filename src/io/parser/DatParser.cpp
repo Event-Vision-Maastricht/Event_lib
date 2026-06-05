@@ -196,7 +196,6 @@ namespace event_lib {
 
             const std::string payload = line.substr(1);
 
-            ////TODO: seems like non-cd events also work?? search.
             // % Data file containing CD events.
             std::string  t = value_after_keyword(payload, "Data file containing");
             if (!t.empty()) {

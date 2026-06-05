@@ -6,7 +6,7 @@
 
 #include "event_lib/processing/DisplayMode.hpp"
 #include <algorithm>
-#include <cmath>
+//#include <cmath>
 #include <iostream>
 
 ////////////////LAB2B HAS THE TIME WINDOW HISTOGRAM IMPLEMENTATION
@@ -22,9 +22,9 @@ namespace event_lib {
         time_window_end_ = 0;
         has_time_window_ = false;
         has_pending_events_ = false;
-        has_time_surface_ = false;
-        time_surface_on_.assign(metadata.height, std::vector<EventTimestamp>(metadata.width, 0));
-        time_surface_off_.assign(metadata.height, std::vector<EventTimestamp>(metadata.width, 0));
+        // has_time_surface_ = false;
+        // time_surface_on_.assign(metadata.height, std::vector<EventTimestamp>(metadata.width, 0));
+        // time_surface_off_.assign(metadata.height, std::vector<EventTimestamp>(metadata.width, 0));
         initialized = true;
         return true;
     }
@@ -100,6 +100,8 @@ namespace event_lib {
         }
     }
 
+/**
+
     //assuming events are sorted in ascending timestamp
     void DisplayMode::make_time_surface(const EventPacket& packet){
         if (!initialized || !metadata_ || !stop_requested_ || stop_requested_->load() || !frame_) return;
@@ -151,6 +153,8 @@ namespace event_lib {
             has_pending_events_ = false;
         }
     }
+    
+ */
 
     void DisplayMode::finish(){
         if (stop_requested_) {

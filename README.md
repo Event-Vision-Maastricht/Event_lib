@@ -1,173 +1,176 @@
-# Event_lib
-Tools for simplifying your event-based life
+# event_lib
 
-Overleaf link: https://www.overleaf.com/read/hhtprzkmqqfg#3263d1
+A small C++17 library for working with event-camera data.
 
-# Dependencies
+`event_lib` provides simple building blocks for reading event streams, grouping
+events into packets, accessing sensor metadata, and optionally visualizing event
+frames with OpenCV.
+
+## Features
+
+- Core `Event` and `EventPacket` types
+- Parser interface for event-camera files
+- Dataset stream API for sequential event reading
+- Shared `SensorMetadata` structure
+- Optional OpenCV frame/window visualization
+- CMake install support with `find_package(event_lib CONFIG REQUIRED)`
+
+## Supported Formats
+
+| Format    |         Notes           |
+|   ---     |         ---             |
+| `.raw`    | EVT2.0 raw event files  |
+| `.dat`    | CD event type DAT files |
+| `.aedat`  | AEDAT 2.0 DVS files     |
+
+## Requirements
+
 - CMake 3.15 or newer
-- C++17 compiler
+- A C++17 compiler
   - Windows: MSVC / Visual Studio Build Tools
   - Linux: GCC or Clang
-- OpenCV, only needed when `EVENT_LIB_WITH_OPENCV=ON`
+- OpenCV, only when `EVENT_LIB_WITH_OPENCV=ON`
 
-## TODO:
-- testing and experiments
-- camera parser/stream
+## Quick Start
 
-#### Supported data file formats:
-- raw version EVT2.0
-- dat CD event type
-- aedat AEDAT2.0 DVS type
+Configure and build:
 
-
-## CMake options
-
-- `EVENT_LIB_WITH_OPENCV=ON`: builds OpenCV window visualization support. This is ON by default.
-- `EVENT_LIB_BUILD_VISUAL_TESTS=ON`: builds the OpenCV window/manual visualization tests. This is OFF by default.
-- `BUILD_TESTING=ON`: builds the normal test executables. This is usually ON by default when using CTest.
-- `EVENT_LIB_VISUAL_HOLD=0`: environment variable used by CTest so visual tests exit automatically. When unset, direct visual-test runs keep the window open until `q` or `Esc`.
-
-
-## Build on Windows
-
-Run commands from the `Event_lib` folder.
-
-### Build library and normal tests
-
-If OpenCV is available through your environment:
-
-```powershell
-cmake -S . -B build -DEVENT_LIB_WITH_OPENCV=ON -DBUILD_TESTING=ON
-cmake --build build --config Debug
+```bash
+cmake -S . -B build -DEVENT_LIB_WITH_OPENCV=OFF -DBUILD_TESTING=ON
+cmake --build build
 ```
 
-If CMake cannot find OpenCV, pass the folder that contains `OpenCVConfig.cmake`:
+Run the test suite:
+
+```bash
+cd build
+ctest --output-on-failure
+```
+
+On Windows with a multi-config generator, include the build configuration:
+
+```powershell
+cmake -S . -B build -DEVENT_LIB_WITH_OPENCV=OFF -DBUILD_TESTING=ON
+cmake --build build --config Debug
+ctest --test-dir build -C Debug --output-on-failure
+```
+
+## Basic Usage
+
+```cpp
+#include <iostream>
+#include "event_lib/io/stream/DatasetEventStream.hpp"
+
+int main() {
+    event_lib::DatasetEventStream stream("events.dat");
+
+    const auto& metadata = stream.metadata();
+    std::cout << "Sensor: " << metadata.width << "x" << metadata.height << '\n';
+
+    while (stream.has_next()) {
+        event_lib::EventPacket packet = stream.next_packet(10000);
+
+        for (const auto& event : packet.get_events()) {
+            // event.timestamp, event.x, event.y, event.polarity
+        }
+    }
+
+    stream.close();
+    return 0;
+}
+```
+
+## CMake Options
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `EVENT_LIB_WITH_OPENCV` | `ON` | Build OpenCV-based visualization support. |
+| `EVENT_LIB_BUILD_VISUAL_TESTS` | `OFF` | Build manual/window-based visualization tests. Requires OpenCV. |
+| `BUILD_TESTING` | CTest default | Build the normal test executables. |
+
+`EVENT_LIB_VISUAL_HOLD=0` can be set in the environment to make visual tests
+exit automatically. When it is unset, directly run visual tests keep their
+window open until `q` or `Esc` is pressed.
+
+## Building With OpenCV
+
+If OpenCV is installed and discoverable by CMake:
+
+```bash
+cmake -S . -B build -DEVENT_LIB_WITH_OPENCV=ON -DBUILD_TESTING=ON
+cmake --build build
+```
+
+If CMake cannot find OpenCV, pass the directory containing `OpenCVConfig.cmake`:
 
 ```powershell
 cmake -S . -B build -DEVENT_LIB_WITH_OPENCV=ON -DBUILD_TESTING=ON -DOpenCV_DIR="C:\path\to\opencv\build"
 cmake --build build --config Debug
 ```
 
-If you are using a conda/cppEnv OpenCV install, activate it before configuring:
+## Visual Tests
 
-```powershell
-conda activate cppEnv
-cmake -S . -B build -DEVENT_LIB_WITH_OPENCV=ON -DBUILD_TESTING=ON
-cmake --build build --config Debug
-```
+Visual tests are only built when both OpenCV and
+`EVENT_LIB_BUILD_VISUAL_TESTS=ON` are enabled:
 
-### Build everything, including visual tests
-
-```powershell
+```bash
 cmake -S . -B build -DEVENT_LIB_WITH_OPENCV=ON -DEVENT_LIB_BUILD_VISUAL_TESTS=ON -DBUILD_TESTING=ON
-cmake --build build --config Debug
+cmake --build build
 ```
 
-Run all registered tests:
+Run them directly from the build directory:
+
+```bash
+./test_visualize
+./test_visualize_raw
+./test_visualize_ae
+```
+
+On Windows, the executables are usually under the configuration directory:
 
 ```powershell
-cd build
-ctest -C Debug --output-on-failure
-cd ..
+.\build\Debug\test_visualize.exe
+.\build\Debug\test_visualize_raw.exe
+.\build\Debug\test_visualize_ae.exe
 ```
 
-Run a specific executable:
+## Install and Use From Another Project
 
-```powershell
-cd build\Debug
-.\test_event.exe
-.\test_visualize.exe
-.\test_visualize_raw.exe
-.\test_visualize_ae.exe
-```
-
-Visual tests are manual/window-based and are only built when `EVENT_LIB_BUILD_VISUAL_TESTS=ON`.
-When run directly, visual tests keep the window open after playback. Press `q` or `Esc` to close it.
-CTest disables this hold automatically so automated test runs can finish.
-
-
-## Build on Linux
-
-Run commands from the `Event_lib` folder.
-
-### Install common dependencies
-
-Ubuntu/Debian example:
-
-```bash
-sudo apt update
-sudo apt install build-essential cmake
-```
-
-For OpenCV visualization support:
-
-```bash
-sudo apt install libopencv-dev
-```
-
-### Headless/parser-only build
-
-Use this on servers, CI, or systems without OpenCV/window support:
-
-```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DEVENT_LIB_WITH_OPENCV=OFF -DBUILD_TESTING=ON
-cmake --build build -j
-cd build
-ctest --output-on-failure
-cd ..
-```
-
-### Build with OpenCV support
-
-```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DEVENT_LIB_WITH_OPENCV=ON -DBUILD_TESTING=ON
-cmake --build build -j
-cd build
-ctest --output-on-failure
-cd ..
-```
-
-### Build visual tests on Linux
-
-Visual tests require OpenCV HighGUI and a display server. Make sure `DISPLAY` or `WAYLAND_DISPLAY` is set.
-
-```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DEVENT_LIB_WITH_OPENCV=ON -DEVENT_LIB_BUILD_VISUAL_TESTS=ON -DBUILD_TESTING=ON
-cmake --build build -j
-```
-
-Run a visual test:
-
-```bash
-./build/test_visualize
-./build/test_visualize_raw
-./build/test_visualize_ae
-```
-
-When run directly, visual tests keep the window open after playback. Press `q` or `Esc` to close it.
-CTest disables this hold automatically so automated test runs can finish.
-
-
-## Install and consume with CMake
-
-Install locally:
+Install the library:
 
 ```bash
 cmake --install build --prefix install
 ```
 
-Use from another CMake project:
+Use it from another CMake project:
 
 ```cmake
 find_package(event_lib CONFIG REQUIRED)
-target_link_libraries(my_target PRIVATE event_lib::event_lib)
+
+add_executable(my_app main.cpp)
+target_link_libraries(my_app PRIVATE event_lib::event_lib)
 ```
 
+If you installed to a custom prefix, point CMake at it when configuring your
+application:
 
+```bash
+cmake -S . -B build -DCMAKE_PREFIX_PATH=/path/to/event_lib/install
+```
 
----- future notes for me
-#### compiler
---> gcc linux msvc windows, dont forget to arrange it in Cmake
+## Project Layout
 
-    -> possible mac, clang default
-producer-consumer pipeline.
+```text
+include/event_lib/      Public headers
+src/                    Library implementation
+tests/                  Unit and visual tests
+cmake/                  Package configuration template
+```
+
+## Notes
+
+- Parser selection is based on the input file extension.
+- `.dat`, `.raw`, and `.aedat` parser tests may skip automatically when sample
+  data files are not available.
+- OpenCV is optional; turn it off for parser-only builds, servers, or CI jobs
+  without display support.

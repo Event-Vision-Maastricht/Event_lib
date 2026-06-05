@@ -85,31 +85,31 @@ namespace event_lib {
         return true;
     }
 
-    bool Frame::publish_frame(const FrameStr& frame) {
-        std::unique_lock<std::mutex> lock(mutex_);
-        publish_slot_free_.wait(lock, [this]() {
-            return closed_ || !has_published_frame_;
-        });
+    // bool Frame::publish_frame(const FrameStr& frame) {
+    //     std::unique_lock<std::mutex> lock(mutex_);
+    //     publish_slot_free_.wait(lock, [this]() {
+    //         return closed_ || !has_published_frame_;
+    //     });
 
-        if (closed_ || metadata_ == nullptr) return false;
+    //     if (closed_ || metadata_ == nullptr) return false;
 
-        ensure_frame_storage(published_frame_);
-        for (int y = 0; y < metadata_->height; ++y) {
-            std::copy(frame.on_events[y].begin(),
-                      frame.on_events[y].end(),
-                      published_frame_.on_events[y].begin());
-            std::copy(frame.off_events[y].begin(),
-                      frame.off_events[y].end(),
-                      published_frame_.off_events[y].begin());
-        }
-        published_frame_.timestamp = frame.timestamp;
-        has_published_frame_ = true;
-        is_dirty_ = true;
-        lock.unlock();
-        frame_ready_.notify_one();
+    //     ensure_frame_storage(published_frame_);
+    //     for (int y = 0; y < metadata_->height; ++y) {
+    //         std::copy(frame.on_events[y].begin(),
+    //                   frame.on_events[y].end(),
+    //                   published_frame_.on_events[y].begin());
+    //         std::copy(frame.off_events[y].begin(),
+    //                   frame.off_events[y].end(),
+    //                   published_frame_.off_events[y].begin());
+    //     }
+    //     published_frame_.timestamp = frame.timestamp;
+    //     has_published_frame_ = true;
+    //     is_dirty_ = true;
+    //     lock.unlock();
+    //     frame_ready_.notify_one();
 
-        return true;
-    }
+    //     return true;
+    // }
 
     bool Frame::publish_frame_unlocked(EventTimestamp timestamp, FrameStr& output_frame) {
         if (metadata_ == nullptr || total_events_ == 0) {

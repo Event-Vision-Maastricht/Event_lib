@@ -44,10 +44,6 @@ bool test_read_show_event_count_visualization() {
     if (!display_mode.init_metadata(stream.metadata())) return false;
     window.init_window(display_mode.get_frame(), true, "Event_lib", display_mode.get_stop_flag());
     const auto stop_flag = display_mode.get_stop_flag();
-///TODO: right now histograms do not stop/return when frame is updated and ready. so when window can visualize it, the whole packet is already processed.
-// thets why right now the max event or max time does not work for anything. possible slutions:
-//1- work in threads so window and display mode are boh constantly called simultaneously.
-//2- displaymode returns after completing each frame update, pointer to the specific event on package to be able to continue.
     try{
         while (stream.has_next() && stop_flag && !stop_flag->load()) {
             EventPacket packet = stream.next_packet(packet_size);

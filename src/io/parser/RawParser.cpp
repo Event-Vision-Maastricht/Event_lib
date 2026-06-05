@@ -66,7 +66,7 @@ uint32_t read_le32(const unsigned char* bytes) {
 }
 } // namespace
 
-//TODO: evt 2.1 format support
+//TODO: future recommendation: evt 2.1 format support
 namespace event_lib {
     RawParser::~RawParser(){close();}
 
@@ -165,7 +165,7 @@ namespace event_lib {
      * % system_ID 21
      * % evt 2.0
      * 
-     * prophesee  header example: //TODO
+     * prophesee  header example:
      * 
      * % camera_integrator_name Prophesee
      * % date 2023-03-29 16:37:46
