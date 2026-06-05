@@ -1,7 +1,9 @@
 #include "event_lib/io/stream/DatasetEventStream.hpp"
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <cmath>
 #include <cstdint>
 #include <exception>
 #include <filesystem>
@@ -10,8 +12,10 @@
 #include <iostream>
 #include <limits>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <thread>
+#include <vector>
 
 #ifdef _WIN32
 #ifndef NOMINMAX
@@ -132,6 +136,39 @@ struct ParserResult {
     std::uint64_t peak_memory_bytes = 0;
 };
 
+struct MetricStats {
+    double avg = 0.0;
+    double mean = 0.0;
+    double min = 0.0;
+    double max = 0.0;
+    double stddev = 0.0;
+};
+
+MetricStats calculate_stats(const std::vector<double>& values) {
+    if (values.empty()) return {};
+
+    MetricStats stats;
+    stats.min = *std::min_element(values.begin(), values.end());
+    stats.max = *std::max_element(values.begin(), values.end());
+
+    double sum = 0.0;
+    for (const auto value : values) sum += value;
+    stats.mean = sum / static_cast<double>(values.size());
+    stats.avg = stats.mean;
+
+    double variance_sum = 0.0;
+    for (const auto value : values) {
+        const auto delta = value - stats.mean;
+        variance_sum += delta * delta;
+    }
+    stats.stddev = std::sqrt(variance_sum / static_cast<double>(values.size()));
+    return stats;
+}
+
+std::uint64_t rounded_u64(double value) {
+    return static_cast<std::uint64_t>(std::llround(value));
+}
+
 ParserResult run_parser_benchmark(
     const std::string& path,
     std::size_t requested_events,
@@ -180,23 +217,61 @@ ParserResult run_parser_benchmark(
     return result;
 }
 
-void append_result(const std::string& output_path, const ParserResult& result) {
+void append_summary(const std::string& output_path, const std::vector<ParserResult>& results) {
+    if (results.empty()) return;
+
+    const auto& first = results.front();
+    std::vector<double> runtimes;
+    std::vector<double> throughputs;
+    std::vector<double> memory_before;
+    std::vector<double> peak_memory;
+    runtimes.reserve(results.size());
+    throughputs.reserve(results.size());
+    memory_before.reserve(results.size());
+    peak_memory.reserve(results.size());
+
+    for (const auto& result : results) {
+        runtimes.push_back(result.runtime_ms);
+        throughputs.push_back(result.throughput_events_per_second);
+        memory_before.push_back(static_cast<double>(result.memory_before_bytes));
+        peak_memory.push_back(static_cast<double>(result.peak_memory_bytes));
+    }
+
+    const auto runtime = calculate_stats(runtimes);
+    const auto throughput = calculate_stats(throughputs);
+    const auto memory_before_stats = calculate_stats(memory_before);
+    const auto peak_memory_stats = calculate_stats(peak_memory);
+
     std::ofstream out(output_path, std::ios::app);
     out << std::fixed << std::setprecision(3);
-    out << "<parser_benchmark"
-        << " repeat=\"" << result.repeat << "\""
-        << " path=\"" << xml_escape(result.path) << "\""
-        << " format=\"" << xml_escape(result.format) << "\""
-        << " file_size_bytes=\"" << result.file_size_bytes << "\""
-        << " requested_events=\"" << result.requested_events << "\""
-        << " processed_events=\"" << result.processed_events << "\""
-        << " packet_size=\"" << result.packet_size << "\""
-        << " width=\"" << result.width << "\""
-        << " height=\"" << result.height << "\""
-        << " runtime_ms=\"" << result.runtime_ms << "\""
-        << " throughput_events_per_second=\"" << result.throughput_events_per_second << "\""
-        << " memory_before_bytes=\"" << result.memory_before_bytes << "\""
-        << " peak_memory_bytes=\"" << result.peak_memory_bytes << "\""
+    out << "<entry"
+        << " operation=\"load_parse\""
+        << " warmup_runs=\"1\""
+        << " measured_runs=\"" << results.size() << "\""
+        << " path=\"" << xml_escape(first.path) << "\""
+        << " format=\"" << xml_escape(first.format) << "\""
+        << " file_size_bytes=\"" << first.file_size_bytes << "\""
+        << " requested_events=\"" << first.requested_events << "\""
+        << " processed_events=\"" << first.processed_events << "\""
+        << " packet_size=\"" << first.packet_size << "\""
+        << " width=\"" << first.width << "\""
+        << " height=\"" << first.height << "\""
+        << " runtime_mean_ms=\"" << runtime.mean << "\""
+        << " runtime_min_ms=\"" << runtime.min << "\""
+        << " runtime_max_ms=\"" << runtime.max << "\""
+        << " runtime_stddev_ms=\"" << runtime.stddev << "\""
+        << " throughput_events_per_second_mean=\"" << throughput.mean << "\""
+        << " throughput_events_per_second_min=\"" << throughput.min << "\""
+        << " throughput_events_per_second_max=\"" << throughput.max << "\""
+        << " throughput_events_per_second_stddev=\"" << throughput.stddev << "\""
+        << " memory_before_bytes_avg=\"" << rounded_u64(memory_before_stats.avg) << "\""
+        << " memory_before_bytes_min=\"" << rounded_u64(memory_before_stats.min) << "\""
+        << " memory_before_bytes_max=\"" << rounded_u64(memory_before_stats.max) << "\""
+        << " peak_memory_bytes=\"" << rounded_u64(peak_memory_stats.max) << "\""
+        << " peak_memory_bytes_avg=\"" << rounded_u64(peak_memory_stats.avg) << "\""
+        << " peak_memory_bytes_min=\"" << rounded_u64(peak_memory_stats.min) << "\""
+        << " peak_memory_bytes_max=\"" << rounded_u64(peak_memory_stats.max) << "\""
+        << " peak_memory_bytes_stddev=\"" << peak_memory_stats.stddev << "\""
         << " />\n";
 }
 
@@ -208,7 +283,7 @@ void print_usage(const char* exe) {
         << "  event_count  Number of events to read. Use 0 to read until EOF.\n"
         << "  packet_size  Events requested per parser packet. Default: 10000.\n"
         << "  output_file  XML-like result log. Default: parser_benchmark_results.xml.\n"
-        << "  repeats      Number of repeated runs. Default: 1.\n";
+        << "  repeats      Number of measured runs after one warmup run. Default: 4.\n";
 }
 
 } // namespace
@@ -223,12 +298,26 @@ int main(int argc, char** argv) {
     const auto event_count = static_cast<std::size_t>(std::stoull(argv[2]));
     const auto packet_size = argc >= 4 ? static_cast<std::size_t>(std::stoull(argv[3])) : 10000;
     const std::string output_file = argc >= 5 ? argv[4] : "parser_benchmark_results.xml";
-    const int repeats = argc >= 6 ? std::stoi(argv[5]) : 1;
+    const int repeats = argc >= 6 ? std::stoi(argv[5]) : 4;
+    if (repeats < 1) {
+        std::cerr << "repeats must be at least 1 measured run.\n";
+        return 2;
+    }
 
     try {
+        std::cout << "warmup=1\n";
+        const auto warmup = run_parser_benchmark(dataset_path, event_count, packet_size, 0);
+        std::cout << "warmup events=" << warmup.processed_events
+                  << " runtime_ms=" << warmup.runtime_ms
+                  << " throughput_events_per_second=" << warmup.throughput_events_per_second
+                  << " peak_memory_bytes=" << warmup.peak_memory_bytes
+                  << '\n';
+
+        std::vector<ParserResult> measured_results;
+        measured_results.reserve(static_cast<std::size_t>(repeats));
         for (int repeat = 1; repeat <= repeats; ++repeat) {
             const auto result = run_parser_benchmark(dataset_path, event_count, packet_size, repeat);
-            append_result(output_file, result);
+            measured_results.push_back(result);
             std::cout << "repeat=" << repeat
                       << " events=" << result.processed_events
                       << " runtime_ms=" << result.runtime_ms
@@ -236,6 +325,8 @@ int main(int argc, char** argv) {
                       << " peak_memory_bytes=" << result.peak_memory_bytes
                       << '\n';
         }
+        append_summary(output_file, measured_results);
+        std::cout << "saved_summary=" << output_file << '\n';
     } catch (const std::exception& e) {
         std::cerr << "Benchmark failed: " << e.what() << '\n';
         return 1;
